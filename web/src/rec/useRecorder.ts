@@ -7,6 +7,11 @@ import { api } from '../lib/api.ts';
 
 const PART_BYTES = 5 * 1024 * 1024; // S3's minimum part size (except the last part)
 
+const uploadHeaders = (): Record<string, string> => {
+  const token = new URLSearchParams(window.location.hash.slice(1)).get('recordingToken');
+  return token ? { 'x-recording-token': token } : {};
+};
+
 function pickMime(hasAudio: boolean): string {
   const opts = hasAudio
     ? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
@@ -45,8 +50,8 @@ class Upload {
   private async put(n: number, blob: Blob) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const { url } = await api.post<{ url: string }>(`/api/sessions/${this.sessionId}/recordings/${this.recId}/part`, { partNumber: n });
-        const r = await fetch(url, { method: 'PUT', body: blob });
+        const { url } = await api.post<{ url: string }>(`/api/sessions/${this.sessionId}/recordings/${this.recId}/part`, { partNumber: n }, uploadHeaders());
+        const r = await fetch(url, { method: 'PUT', headers: { 'content-type': 'application/octet-stream' }, body: blob });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const etag = r.headers.get('ETag');
         if (!etag) throw new Error('No ETag (S3 bucket CORS must expose ETag; run npm run s3:setup)');
@@ -62,7 +67,7 @@ class Upload {
   async finish(durationMs: number) {
     this.flush();
     await this.queue;
-    await api.post(`/api/sessions/${this.sessionId}/recordings/${this.recId}/complete`, { parts: this.parts, durationMs });
+    await api.post(`/api/sessions/${this.sessionId}/recordings/${this.recId}/complete`, { parts: this.failed ? [] : this.parts, durationMs }, uploadHeaders());
   }
 }
 
@@ -99,12 +104,20 @@ export function useRecorder(socket: RoomSocket | null, session: SessionInfo | nu
           role,
           mime: (rec.mimeType || mime || 'video/webm').split(';')[0],
           startOffsetMs,
-        });
+        }, uploadHeaders());
         upload = new Upload(sessionId, created.id);
         for (const b of early) upload.push(b);
+        if (cancelled) {
+          const u = upload;
+          rec.onstop = () => { void u.finish(performance.now() - started).catch(() => {}); };
+          if (rec.state !== 'inactive') rec.stop();
+          else void u.finish(performance.now() - started).catch(() => {});
+          return;
+        }
         setRecording(true);
         setError(null);
       } catch (e) {
+        if (rec && rec.state !== 'inactive') rec.stop();
         setError((e as Error).message);
       }
     })();

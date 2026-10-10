@@ -1,3 +1,5 @@
+import { owns } from './auth.ts';
+import { config } from './config.ts';
 import type { Server } from 'node:http';
 import { WebSocketServer } from 'ws';
 import type { ClientMsg, NodeRole } from '../shared/types.ts';
@@ -9,7 +11,8 @@ const ROLES: NodeRole[] = ['presenter-cam', 'audience-cam', 'monitor', 'dashboar
 
 export function attachWs(server: Server, hub: Hub) {
   const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 2 * 1024 * 1024 });
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
+    if (config.publicUrl && req.headers.origin !== new URL(config.publicUrl).origin) return ws.close(1008, 'Invalid origin');
     let room: Room | undefined;
     let client: Parameters<Room['join']>[0] | undefined;
     ws.on('message', async (data, isBinary) => {
@@ -34,6 +37,7 @@ export function attachWs(server: Server, hub: Hub) {
         if (!room || !client) return;
         // Phones can only react; only operator nodes may control the session.
         if (client.role === 'phone' && msg.type !== 'reaction' && msg.type !== 'ping') return;
+        if (msg.type === 'control' && room.row.presenterId.startsWith('account:') && !owns(req, room.row.presenterId)) throw new Error('Use the signed-in dashboard to control this session');
         await room.handle(client, msg);
       } catch (e) {
         ws.send(JSON.stringify({ type: 'error', message: (e as Error).message }));

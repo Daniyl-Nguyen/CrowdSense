@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Home } from './pages/Home.tsx';
 
+const Account = lazy(() => import('./pages/Account.tsx'));
 const Camera = lazy(() => import('./pages/Camera.tsx'));
 const Dashboard = lazy(() => import('./pages/Dashboard.tsx'));
 const Monitor = lazy(() => import('./pages/Monitor.tsx'));
@@ -15,6 +16,7 @@ export function App() {
     <Suspense fallback={<div className="shell empty">Loading…</div>}>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/account" element={<Account />} />
         <Route path="/camera" element={<Camera />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/monitor" element={<Monitor />} />

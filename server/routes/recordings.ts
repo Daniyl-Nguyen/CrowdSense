@@ -1,5 +1,6 @@
 // Opt-in recordings: browser → presigned multipart upload (S3 or local) → ffmpeg remux for seeking.
 // Also serves everything the synced Replay page needs.
+import { account, ownerId, owns, canUpload, uploadToken } from '../auth.ts';
 import { Router } from 'express';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -17,6 +18,42 @@ const run = promisify(execFile);
 export function recordingRoutes(hub: Hub, blobs: BlobStore) {
   const r = Router();
 
+  r.get('/me/videos', async (req, res) => {
+    const user = account(req);
+    if (!user) return res.status(401).json({ error: 'Sign in to see your videos' });
+    const sessions = await hub.repo.listSessions(ownerId(user), 1000);
+    const videos = (await Promise.all(sessions.map(async session =>
+      Promise.all((await hub.repo.getRecordings(session.id)).map(async rec => ({
+        id: rec.id, sessionId: session.id, title: session.title, createdAt: session.createdAt,
+        role: rec.role, status: rec.status, durationMs: rec.durationMs,
+        url: ['uploaded', 'processing', 'ready'].includes(rec.status) ? `/api/me/videos/${session.id}/${rec.id}/play` : null,
+      })))
+    ))).flat();
+    res.json({ videos });
+  });
+  r.get('/me/videos/:sessionId/:recId/play', async (req, res) => {
+    const session = await hub.repo.getSession(req.params.sessionId);
+    if (!session || !owns(req, session.presenterId)) return res.status(403).json({ error: 'Sign in to the account that owns this video' });
+    const rec = (await hub.repo.getRecordings(session.id)).find(x => x.id === req.params.recId);
+    if (!rec || !['uploaded', 'processing', 'ready'].includes(rec.status)) return res.sendStatus(404);
+    res.redirect(await blobs.getUrl(rec.finalKey ?? rec.key, 900));
+  });
+  r.get('/sessions/:id/recording-access', async (req, res) => {
+    const session = await hub.repo.getSession(req.params.id);
+    if (!session || !owns(req, session.presenterId)) return res.status(403).json({ error: 'Session owner required' });
+    res.json({ presenter: uploadToken(session.id, 'presenter'), audience: uploadToken(session.id, 'audience') });
+  });
+  r.use('/sessions/:id/recordings', async (req, res, next) => {
+    const session = await hub.repo.getSession(req.params.id);
+    if (!session) return res.sendStatus(404);
+    if (!session.presenterId.startsWith('account:')) return next();
+    const recId = req.path.split('/')[1];
+    const rec = recId ? (await hub.repo.getRecordings(session.id)).find(x => x.id === recId) : null;
+    const role = recId ? rec?.role : req.body?.role === 'audience' ? 'audience' : 'presenter';
+    if (!role || !canUpload(req, session.id, role, session.presenterId)) return res.status(403).json({ error: 'Open the camera using the owner’s latest QR code, or sign in' });
+    next();
+  });
+
   const find = async (sessionId: string, recId: string) => (await hub.repo.getRecordings(sessionId)).find((x) => x.id === recId) ?? null;
 
   r.post('/sessions/:id/recordings', async (req, res) => {
@@ -28,7 +65,7 @@ export function recordingRoutes(hub: Hub, blobs: BlobStore) {
     const mime = String(req.body?.mime ?? 'video/webm').slice(0, 80);
     const ext = mime.includes('mp4') ? 'mp4' : 'webm';
     const id = crypto.randomUUID();
-    const key = `sessions/${session.id}/${role}-${id.slice(0, 8)}.${ext}`;
+    const key = `${session.presenterId.startsWith('account:') ? 'accounts/' + session.presenterId.slice(8) + '/' : ''}sessions/${session.id}/${role}-${id.slice(0, 8)}.${ext}`;
     const uploadId = await blobs.createMultipart(key, mime);
     const row: RecordingRow = {
       id,
@@ -56,8 +93,10 @@ export function recordingRoutes(hub: Hub, blobs: BlobStore) {
 
   r.post('/sessions/:id/recordings/:recId/complete', async (req, res) => {
     const rec = await find(req.params.id, req.params.recId);
-    if (!rec || !rec.uploadId) return res.status(404).json({ error: 'No active upload' });
+    if (!rec || rec.status !== 'recording' || !rec.uploadId) return res.status(404).json({ error: 'No active upload' });
     const parts = (req.body?.parts ?? []) as { PartNumber: number; ETag: string }[];
+    if (!Array.isArray(parts) || parts.length > 10000 || parts.some(p => !Number.isInteger(p.PartNumber) || p.PartNumber < 1 || p.PartNumber > 10000 || typeof p.ETag !== 'string' || p.ETag.length > 128) || new Set(parts.map(p => p.PartNumber)).size !== parts.length)
+      return res.status(400).json({ error: 'Invalid upload parts' });
     if (!parts.length) {
       await blobs.abortMultipart(rec.key, rec.uploadId);
       await hub.repo.upsertRecording({ ...rec, status: 'failed' });
@@ -123,7 +162,7 @@ export function recordingRoutes(hub: Hub, blobs: BlobStore) {
         mime: rec.mime,
         startOffsetMs: rec.startOffsetMs,
         durationMs: rec.durationMs,
-        url: await blobs.getUrl(rec.finalKey ?? rec.key, 6 * 3600),
+        url: await blobs.getUrl(rec.finalKey ?? rec.key, 900),
       })),
     );
     res.json({

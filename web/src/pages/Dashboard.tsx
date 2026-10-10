@@ -28,7 +28,7 @@ function DashboardView({ code }: { code: string }) {
   const feed = useLiveFeed();
   const room = useRoom(code, 'dashboard', feed.onMsg);
   useBackfill(room.session, feed);
-  const [showJoin, setShowJoin] = useState(false);
+  const [showJoin, setShowJoin] = useState(true);
   const [toasts, setToasts] = useState<{ id: string; text: string; sub?: string }[]>([]);
   const s = room.session;
   const tick = room.tick;
@@ -63,7 +63,7 @@ function DashboardView({ code }: { code: string }) {
         <span className="room-code" aria-label={`Room code ${code}`}>
           <span className="eyebrow">Room</span> <span className="mono">{code}</span>
         </span>
-        <button className="btn btn-sm" onClick={() => setShowJoin((v) => !v)} aria-expanded={showJoin || s?.status === 'lobby'}>
+        <button className="btn btn-sm" onClick={() => setShowJoin((v) => !v)} aria-expanded={showJoin}>
           {showJoin ? 'Hide join codes' : 'Join codes'}
         </button>
         <ThemeToggle />
@@ -73,7 +73,7 @@ function DashboardView({ code }: { code: string }) {
           <div className="stack"><p className="eyebrow">Your live session</p><h1>Make yourself heard.</h1><p className="dim">Your room, your delivery, one clear view.</p></div>
           {s && <SessionControls session={s} socket={room.socket} />}
         </div>
-        {s && (s.status === 'lobby' || showJoin) && <JoinPanel session={s} config={room.config} />}
+        {s && showJoin && <JoinPanel session={s} config={room.config} />}
         {s?.status === 'ended' && (
           <div className="panel row" style={{ justifyContent: 'space-between' }}>
             <div>
@@ -235,10 +235,14 @@ function DashboardView({ code }: { code: string }) {
 
 function JoinPanel({ session, config }: { session: SessionInfo; config: ServerConfig | null }) {
   const base = shareBase(config);
-  const [showQr, setShowQr] = useState(false);
+  const [tokens, setTokens] = useState<Record<string, string>>({});
+  useEffect(() => {
+    api.get<Record<string, string>>(`/api/sessions/${session.id}/recording-access`).then(setTokens).catch(() => {});
+  }, [session.id]);
+  const cameraToken = (role: string) => tokens[role] ? `#recordingToken=${encodeURIComponent(tokens[role])}` : '';
   const items = [
-    { label: 'Presenter camera', path: `/camera?role=presenter&s=${session.code}`, count: session.nodes.presenter, hint: 'Faces you' },
-    { label: 'Audience camera', path: `/camera?role=audience&s=${session.code}`, count: session.nodes.audience, hint: 'Faces the room' },
+    { label: 'Presenter camera', path: `/camera?role=presenter&s=${session.code}${cameraToken('presenter')}`, count: session.nodes.presenter, hint: 'Faces you' },
+    { label: 'Audience camera', path: `/camera?role=audience&s=${session.code}${cameraToken('audience')}`, count: session.nodes.audience, hint: 'Faces the room' },
     { label: 'Audience phones', path: `/join?s=${session.code}`, count: session.nodes.phones, hint: 'Anonymous reactions' },
     { label: 'Confidence monitor', path: `/monitor?s=${session.code}`, count: session.nodes.monitors, hint: 'Screen facing you' },
   ];
@@ -247,12 +251,11 @@ function JoinPanel({ session, config }: { session: SessionInfo; config: ServerCo
     <section className="panel" aria-labelledby="join-h">
       <div className="panel-head">
         <div className="stack"><h2 id="join-h">Set up your room</h2><p className="dim setup-description">Open a camera on this device, or scan its code from another.</p></div>
-        <button className="btn btn-sm" aria-expanded={showQr} onClick={() => setShowQr((v) => !v)}>{showQr ? 'Hide QR codes' : 'Show QR codes'}</button>
       </div>
       <div className="join-grid">
         {items.map((it) => (
           <div key={it.label} className="join-card">
-            {showQr && <Qr url={`${base}${it.path}`} label={it.label} />}
+            <Qr url={`${base}${it.path}`} label={it.label} />
             <div className="stack" style={{ gap: 4, minWidth: 0 }}>
               <strong>{it.label}</strong>
               <span className="faint" style={{ fontSize: 'var(--fs-xs)' }}>
@@ -270,7 +273,7 @@ function JoinPanel({ session, config }: { session: SessionInfo; config: ServerCo
         ))}
       </div>
       <details className="integration-details"><summary>Connected services</summary><IntegrationChips config={config} /></details>
-      {showQr && insecure && (
+      {insecure && (
         <p className="faint" style={{ fontSize: 'var(--fs-xs)', marginTop: 12 }}>
           Phone cameras need HTTPS. Run <span className="kbd">npm run dev:lan</span> or set PUBLIC_URL to a tunnel. Reaction buttons work over plain HTTP.
         </p>

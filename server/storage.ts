@@ -57,9 +57,29 @@ export class S3Blobs implements BlobStore {
     return r.UploadId!;
   }
 
-  partUrl(key: string, uploadId: string, partNumber: number) {
-    return this.presign(this.c, new this.mod.UploadPartCommand({ Bucket: this.bucket, Key: key, UploadId: uploadId, PartNumber: partNumber }), {
-      expiresIn: 3600,
+  private uploadSecret = crypto.randomBytes(32);
+
+  async partUrl(key: string, uploadId: string, partNumber: number) {
+    const ticket = Buffer.from(JSON.stringify({ key, uploadId, partNumber, exp: Date.now() + 3600000 })).toString('base64url');
+    const signature = crypto.createHmac('sha256', this.uploadSecret).update(ticket).digest('base64url');
+    return `/api/storage/part?ticket=${ticket}&signature=${signature}`;
+  }
+
+  mount(app: Express) {
+    // Lightsail buckets do not support custom CORS. Proxy only upload parts;
+    // playback still uses short-lived signed S3 URLs directly.
+    app.put('/api/storage/part', express.raw({ type: '*/*', limit: '64mb' }), async (req, res) => {
+      const ticket = String(req.query.ticket ?? '');
+      const signature = String(req.query.signature ?? '');
+      const expected = crypto.createHmac('sha256', this.uploadSecret).update(ticket).digest('base64url');
+      if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return res.sendStatus(403);
+      let data;
+      try { data = JSON.parse(Buffer.from(ticket, 'base64url').toString()); } catch { return res.sendStatus(403); }
+      if (data.exp < Date.now() || !Buffer.isBuffer(req.body)) return res.sendStatus(403);
+      try {
+        const result = await this.c.send(new this.mod.UploadPartCommand({ Bucket: this.bucket, Key: data.key, UploadId: data.uploadId, PartNumber: data.partNumber, Body: req.body }));
+        res.set('ETag', result.ETag!).sendStatus(200);
+      } catch { res.status(502).json({ error: 'Video upload failed. Please retry.' }); }
     });
   }
 
