@@ -2,26 +2,29 @@
 // with a slim status strip. Optional spoken nudges (browser speech, or ElevenLabs if configured).
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { Nudge, ServerMsg } from '@shared/types.ts';
+import type { ReactionKind, ServerMsg } from '@shared/types.ts';
 import { SPEECH } from '@shared/thresholds.ts';
 import { useRoom } from '../lib/socket.ts';
 import { pref, setPref } from '../lib/ids.ts';
 import { NudgeCard, fmtTime } from '../ui/components.tsx';
 import { useSessionClock } from '../ui/live.tsx';
+import { useBackfill, useLiveFeed } from '../lib/feed.ts';
+import { REACTIONS } from '../ui/reactions.tsx';
 
 export default function Monitor() {
   const [params] = useSearchParams();
   const code = params.get('s')?.toUpperCase() ?? '';
-  const [nudge, setNudge] = useState<Nudge | null>(null);
+  const feed = useLiveFeed();
   const [speak, setSpeak] = useState<boolean>(pref('speakNudges', false));
   const speakRef = useRef(speak);
   speakRef.current = speak;
   const room = useRoom(code || null, 'monitor', (m: ServerMsg) => {
+    feed.onMsg(m);
     if (m.type === 'nudge') {
-      setNudge(m.nudge);
       if (speakRef.current) void say(m.nudge.text);
     }
   });
+  useBackfill(room.session, feed);
   const elapsed = useSessionClock(room.session, room.socket);
   const t = room.tick;
   const att = t?.audience?.attention;
@@ -35,8 +38,9 @@ export default function Monitor() {
   return (
     <div className="monitor">
       <main id="main" className="monitor-main">
+        <section className="monitor-coaching" aria-label="Live coaching">
         <NudgeCard
-          nudge={nudge}
+          nudge={feed.latestNudge}
           idle={
             <div className="monitor-idle">
               <span className="monitor-idle-num num" style={{ color: att == null ? 'var(--text-dim)' : att < 0.5 ? 'var(--alert)' : att < 0.7 ? 'var(--warn)' : 'var(--good)' }}>
@@ -47,6 +51,37 @@ export default function Monitor() {
             </div>
           }
         />
+        </section>
+        <aside className="panel monitor-feedback" aria-labelledby="monitor-feedback-title">
+          <div className="stack">
+            <h2 id="monitor-feedback-title">Audience reactions</h2>
+            <p className="dim monitor-feedback-meta">{room.session?.nodes.phones ?? 0} connected · last 60 seconds</p>
+          </div>
+          <div className="react-counts" aria-label="Audience reaction counts">
+            {(Object.keys(REACTIONS) as ReactionKind[]).map((kind) => (
+              <div key={kind} className="react-count" data-kind={kind}>
+                <span aria-hidden="true">{REACTIONS[kind].icon}</span>
+                <span className="num display">{t?.reactions[kind] ?? 0}</span>
+                <span className="dim">{REACTIONS[kind].label}</span>
+              </div>
+            ))}
+          </div>
+          <section className="monitor-questions" aria-labelledby="monitor-questions-title">
+            <h3 id="monitor-questions-title">Latest questions</h3>
+            <div role="log" aria-live="polite" aria-relevant="additions" aria-label="Audience questions">
+              {feed.questions.length ? (
+                <ul className="monitor-question-list">
+                  {feed.questions.slice(0, 3).map((q, i) => (
+                    <li key={`${q.t}-${q.text}-${i}`}>
+                      <span className="faint num">{fmtTime(q.t)}</span>
+                      <p>{q.text || 'Someone has a question.'}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="dim monitor-questions-empty">Questions from audience phones will appear here.</p>}
+            </div>
+          </section>
+        </aside>
       </main>
       <footer className="monitor-strip" aria-label="Live status">
         <Cell label="Time" value={fmtTime(elapsed)} />

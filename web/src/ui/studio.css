@@ -198,3 +198,27 @@ h1, h2, h3, .display, .brand { font-weight: 500; font-variation-settings: 'opsz'
   .preview-header h2 { font-size: 16px; }
   .preview-room { padding-inline: 16px; }
 }
+
+/* Presenter feedback stays beside the coaching prompt on wide displays. */
+.monitor-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); align-items: center; gap: 24px; }
+.monitor-coaching { min-width: 0; }
+.monitor-feedback { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.monitor-feedback h2 { font-size: 24px; }
+.monitor-feedback-meta { font-size: 14px; }
+.monitor-feedback .react-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.monitor-feedback .react-count { padding: 16px 8px; gap: 6px; font-size: 14px; }
+.monitor-feedback .react-count .display { font-size: 32px; }
+.monitor-questions h3 { font-size: 18px; margin-bottom: 12px; }
+.monitor-question-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; max-height: 34dvh; overflow-y: auto; }
+.monitor-question-list li { padding: 12px 16px; border-radius: 16px; background: var(--spot-glow); }
+.monitor-question-list li > span { font-size: 12px; }
+.monitor-question-list p { margin-top: 4px; font-size: 18px; line-height: 1.4; overflow-wrap: anywhere; }
+.monitor-questions-empty { font-size: 15px; line-height: 1.5; }
+@media (max-width: 900px) {
+  .monitor-main { grid-template-columns: minmax(0, 1fr); }
+  .monitor-main .nudge, .monitor-main .nudge-idle { min-height: 38dvh; }
+  .monitor-feedback .react-counts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .monitor-feedback .react-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
