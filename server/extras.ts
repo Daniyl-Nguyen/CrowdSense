@@ -3,7 +3,8 @@ import type { Express } from 'express';
 import type { Hub } from './hub.ts';
 import type { BlobStore } from './storage.ts';
 import { buildReport } from './report.ts';
-import { coach } from './ai/coach.ts';
+import { coach, registerCoach } from './ai/coach.ts';
+import { anthropicCoach, bedrockCoach } from './ai/claude.ts';
 import { setStatus } from './status.ts';
 import { recordingRoutes } from './routes/recordings.ts';
 
@@ -21,6 +22,9 @@ export function generate(hub: Hub, blobs: BlobStore, sessionId: string) {
 }
 
 export async function mountExtras(app: Express, hub: Hub, blobs: BlobStore) {
+  // Provider order: Claude on Bedrock → Anthropic API → templates (built into coach.generate).
+  registerCoach(bedrockCoach);
+  registerCoach(anthropicCoach);
   setStatus({ coach: coach.activeName() });
   hub.onEnded = (room) => {
     // Give Whisper a moment to finish the last utterance before summarizing.

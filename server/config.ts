@@ -22,7 +22,7 @@ export const config = {
   bedrockEnabled: env('BEDROCK_ENABLED') !== '0',
 
   anthropicKey: env('ANTHROPIC_API_KEY'),
-  anthropicModel: env('ANTHROPIC_MODEL') ?? 'claude-sonnet-5-5',
+  anthropicModel: env('ANTHROPIC_MODEL') ?? 'claude-opus-5-5',
 
   whisperEnabled: env('WHISPER_ENABLED') !== '0',
   whisperModel: env('WHISPER_MODEL') ?? 'onnx-community/whisper-base.en',
