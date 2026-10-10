@@ -193,9 +193,10 @@ export interface SessionInfo {
 
 export interface ServerConfig {
   whisper: 'ready' | 'loading' | 'off' | 'error';
+  hostedSpeech?: boolean;
   storage: 'neon' | 'local';
   blobs: 's3' | 'local';
-  coach: 'bedrock' | 'anthropic' | 'template';
+  coach: 'huggingface' | 'bedrock' | 'anthropic' | 'template';
   lanUrls: string[];
   ffmpeg: boolean;
   extras: { gemini: boolean; tts: boolean; rekognition: boolean };

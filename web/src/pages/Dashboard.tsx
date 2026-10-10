@@ -293,7 +293,7 @@ function Qr({ url, label }: { url: string; label: string }) {
 function IntegrationChips({ config }: { config: ServerConfig | null }) {
   if (!config) return null;
   const chips: [string, boolean, string][] = [
-    ['Whisper', config.whisper === 'ready', config.whisper],
+    [config.hostedSpeech ? 'Hugging Face speech + local fallback' : 'Whisper', config.whisper === 'ready', config.whisper],
     ['Storage', config.storage === 'neon', config.storage === 'neon' ? 'Neon' : 'local'],
     ['Recordings', config.blobs === 's3', config.blobs === 's3' ? 'S3' : 'local'],
     ['Coach', config.coach !== 'template', config.coach],

@@ -21,6 +21,12 @@ export const config = {
   bedrockModel: env('BEDROCK_MODEL_ID'),
   bedrockEnabled: env('BEDROCK_ENABLED') !== '0',
 
+  hfToken: env('HF_TOKEN'),
+  hfCoachEnabled: env('HF_COACH_ENABLED') === '1',
+  hfAsrEnabled: env('HF_ASR_ENABLED') === '1',
+  hfCoachModel: env('HF_COACH_MODEL') ?? 'openai/gpt-oss-120b',
+  hfAsrModel: env('HF_ASR_MODEL') ?? 'openai/whisper-large-v3',
+
   anthropicKey: env('ANTHROPIC_API_KEY'),
   anthropicModel: env('ANTHROPIC_MODEL') ?? 'claude-opus-5-5',
 

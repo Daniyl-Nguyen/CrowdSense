@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import type { ServerConfig } from '../shared/types.ts';
-import { lanUrls } from './config.ts';
+import { config, lanUrls } from './config.ts';
 import { transcriber } from './ai/whisper.ts';
 
 let state = {
@@ -16,7 +16,7 @@ export function setStatus(patch: Partial<typeof state>) {
 }
 
 export function serverConfig(): ServerConfig {
-  return { whisper: transcriber.status, lanUrls: lanUrls(), ...state };
+  return { hostedSpeech: !!config.hfToken && config.hfAsrEnabled, whisper: transcriber.status, lanUrls: lanUrls(), ...state };
 }
 
 export function ffmpegPath(): string | null {

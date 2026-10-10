@@ -9,7 +9,7 @@ import { Stat, TopBar, fmtTime, type Level } from '../ui/components.tsx';
 import { Timeline } from '../ui/Timeline.tsx';
 import { REACTIONS } from '../ui/reactions.tsx';
 
-const PROVIDER_LABEL = { bedrock: 'Claude on Amazon Bedrock', anthropic: 'Claude (Anthropic API)', template: 'Rule-based coach (no AI key set)' };
+const PROVIDER_LABEL = { huggingface: 'Hugging Face AI coach', bedrock: 'Claude on Amazon Bedrock', anthropic: 'Claude (Anthropic API)', template: 'Rule-based coach (no AI key set)' };
 const pct = (v: number | null | undefined) => (v == null ? '—' : Math.round(v * 100));
 const lvl = (bad: boolean, warn: boolean): Level => (bad ? 'alert' : warn ? 'warn' : 'good');
 

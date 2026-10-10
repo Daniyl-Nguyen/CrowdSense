@@ -2,6 +2,7 @@
 // We prompt the decoder with filler-rich text (<|startofprev|> …) so Whisper keeps "um"/"uh"
 // instead of cleaning them up, which is what live filler counts depend on.
 import path from 'node:path';
+import { hostedTranscribe } from './huggingface.ts';
 import { config } from '../config.ts';
 
 export interface Transcriber {
@@ -98,6 +99,31 @@ class NoTranscriber implements Transcriber {
   }
 }
 
-export const transcriber: Transcriber = config.whisperEnabled
+class HostedTranscriber implements Transcriber {
+  private retryAfter = 0;
+  private inFlight = 0;
+  constructor(private fallback: Transcriber) {}
+  get status(): Transcriber['status'] {
+    return Date.now() < this.retryAfter ? this.fallback.status : 'ready';
+  }
+  async transcribe(pcm: Float32Array): Promise<string> {
+    if (!pcm.length || pcm.length > 16000 * 30) return '';
+    if (Date.now() < this.retryAfter || this.inFlight >= 3) return this.fallback.transcribe(pcm);
+    this.inFlight++;
+    try {
+      const text = await hostedTranscribe(pcm);
+      if (HALLUCINATIONS.some(r => r.test(text)) || text.split(/\s+/).length > pcm.length / 16000 * 5 + 6) return '';
+      return text;
+    } catch {
+      this.retryAfter = Date.now() + 60000;
+      console.warn('[speech] Hosted transcription unavailable; using local fallback for 60 seconds');
+      return this.fallback.transcribe(pcm);
+    } finally { this.inFlight--; }
+  }
+}
+
+const localTranscriber: Transcriber = config.whisperEnabled
   ? new WhisperTranscriber(config.whisperModel)
   : new NoTranscriber();
+
+export const transcriber: Transcriber = config.hfToken && config.hfAsrEnabled ? new HostedTranscriber(localTranscriber) : localTranscriber;

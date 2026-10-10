@@ -52,10 +52,10 @@ export function ConsentGate({
         </h1>
         <ul>
           <li>
-            <strong>All video analysis runs in this browser.</strong> Video is never streamed to other devices.
+            <strong>All video analysis runs in this browser.</strong> Video uploads only when recording is enabled.
           </li>
           <li>
-            <strong>Only anonymous numbers leave this device</strong>, such as head direction, posture angles,
+            <strong>Video analysis sends anonymous measurements</strong>, such as head direction, posture angles,
             and loudness.
           </li>
           {kind === 'audience' ? (
@@ -65,8 +65,7 @@ export function ConsentGate({
             </li>
           ) : (
             <li>
-              <strong>Your voice is transcribed</strong> on the session's own server (Whisper) to measure pace and
-              filler words.
+              <strong>Your voice is transcribed</strong> to measure pace and filler words. When hosted speech is enabled, audio is sent through Hugging Face; otherwise it uses local Whisper. AI coaching sends transcript excerpts and session metrics to the configured provider.
             </li>
           )}
           <li>
