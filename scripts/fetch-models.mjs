@@ -10,6 +10,9 @@ const models = {
     'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
   'pose_landmarker_lite.task':
     'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+  // OpenCV YuNet small-face detector (MIT), hosted on Hugging Face.
+  'face_detection_yunet_2023mar.onnx':
+    'https://huggingface.co/opencv/face_detection_yunet/resolve/main/face_detection_yunet_2023mar.onnx',
 };
 for (const [name, url] of Object.entries(models)) {
   const file = path.join(dir, name);

@@ -20,6 +20,7 @@ export default defineConfig({
       '/api': api,
       '/mediapipe': api,
       '/models': api,
+      '/ort': api,
       '/ws': { target: api.replace('http', 'ws'), ws: true },
     },
   },

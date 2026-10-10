@@ -34,11 +34,14 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
 // MediaPipe runtime + models are served locally (no CDN version drift, works offline after install).
+app.use('/ort', express.static(path.resolve('node_modules/onnxruntime-web/dist'), { maxAge: '7d' }));
 app.use('/mediapipe/wasm', express.static(path.resolve('node_modules/@mediapipe/tasks-vision/wasm'), { maxAge: '7d' }));
 app.get('/models/:name', (req, res) => {
   const file = path.resolve('.cache/models', path.basename(req.params.name));
   if (fs.existsSync(file)) return res.sendFile(file, { maxAge: '7d', dotfiles: 'allow' });
   const remote: Record<string, string> = {
+    'face_detection_yunet_2023mar.onnx':
+      'https://huggingface.co/opencv/face_detection_yunet/resolve/main/face_detection_yunet_2023mar.onnx',
     'face_landmarker.task':
       'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
     'pose_landmarker_lite.task':
@@ -58,7 +61,7 @@ app.use('/api', sessionRoutes(hub));
 const dist = path.resolve('dist');
 if (fs.existsSync(dist)) {
   app.use(express.static(dist));
-  app.get(/^\/(?!api|ws|models|mediapipe).*/, (_req, res) => res.sendFile(path.join(dist, 'index.html')));
+  app.get(/^\/(?!api|ws|models|mediapipe|ort).*/, (_req, res) => res.sendFile(path.join(dist, 'index.html')));
 }
 
 const server = http.createServer(app);
