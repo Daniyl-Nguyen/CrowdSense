@@ -235,9 +235,14 @@ function DashboardView({ code }: { code: string }) {
 
 function JoinPanel({ session, config }: { session: SessionInfo; config: ServerConfig | null }) {
   const base = shareBase(config);
+  const [tokens, setTokens] = useState<Record<string, string>>({});
+  useEffect(() => {
+    api.get<Record<string, string>>(`/api/sessions/${session.id}/recording-access`).then(setTokens).catch(() => {});
+  }, [session.id]);
+  const cameraToken = (role: string) => tokens[role] ? `#recordingToken=${encodeURIComponent(tokens[role])}` : '';
   const items = [
-    { label: 'Presenter camera', path: `/camera?role=presenter&s=${session.code}`, count: session.nodes.presenter, hint: 'Faces you' },
-    { label: 'Audience camera', path: `/camera?role=audience&s=${session.code}`, count: session.nodes.audience, hint: 'Faces the room' },
+    { label: 'Presenter camera', path: `/camera?role=presenter&s=${session.code}${cameraToken('presenter')}`, count: session.nodes.presenter, hint: 'Faces you' },
+    { label: 'Audience camera', path: `/camera?role=audience&s=${session.code}${cameraToken('audience')}`, count: session.nodes.audience, hint: 'Faces the room' },
     { label: 'Audience phones', path: `/join?s=${session.code}`, count: session.nodes.phones, hint: 'Anonymous reactions' },
     { label: 'Confidence monitor', path: `/monitor?s=${session.code}`, count: session.nodes.monitors, hint: 'Screen facing you' },
   ];

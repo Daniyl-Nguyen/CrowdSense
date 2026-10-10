@@ -1,5 +1,5 @@
 import express from 'express';
-import cors from 'cors';
+import { authRoutes, owns } from './auth.ts';
 import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -31,7 +31,7 @@ async function makeRepo(): Promise<Repo> {
 }
 
 async function makeBlobs(): Promise<BlobStore> {
-  if (config.s3Bucket && config.aws.hasCreds) {
+  if (config.s3Bucket) {
     try {
       const s3 = new S3Blobs(config.s3Bucket);
       await s3.init();
@@ -39,14 +39,19 @@ async function makeBlobs(): Promise<BlobStore> {
       console.log(`[s3] using bucket ${config.s3Bucket}`);
       return s3;
     } catch (e) {
-      console.warn(`[s3] unavailable (${(e as Error).message}); recordings go to local disk`);
+      throw e;
     }
   }
   return new LocalBlobs(config.dataDir);
 }
 
 const app = express();
-app.use(cors());
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && config.publicUrl && req.get('origin') !== new URL(config.publicUrl).origin)
+    return res.status(403).json({ error: 'Please use the app website for this request' });
+  next();
+});
 app.use(express.json({ limit: '2mb' }));
 
 // MediaPipe runtime + models are served locally (no CDN version drift, works offline after install).
@@ -69,8 +74,22 @@ app.get('/models/:name', (req, res) => {
 
 const repo = await makeRepo();
 const blobs = await makeBlobs();
-if (blobs instanceof LocalBlobs) blobs.mount(app);
+if (blobs instanceof LocalBlobs || blobs instanceof S3Blobs) blobs.mount(app);
 const hub = new Hub(repo);
+app.use('/api/auth', authRoutes());
+app.use('/api/sessions/:id', async (req, res, next) => {
+  if (req.params.id === 'live') return next();
+  const session = await repo.getSession(req.params.id);
+  if (session?.presenterId.startsWith('account:') && !owns(req, session.presenterId)) {
+    // Upload endpoints validate a separate camera-only capability.
+    if (/^\/recordings(?:\/|$)/.test(req.path)) return next();
+    // Live room participants can backfill live feedback, never saved media.
+    const liveRoom = hub.find(session.id);
+    if (req.path === '/history' && liveRoom && liveRoom.row.status !== 'ended') return next();
+    return res.status(403).json({ error: 'Sign in to the account that owns this session' });
+  }
+  next();
+});
 const { mountExtras } = await import('./extras.ts');
 await mountExtras(app, hub, blobs);
 app.use('/api', sessionRoutes(hub));

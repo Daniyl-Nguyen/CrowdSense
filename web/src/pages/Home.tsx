@@ -50,7 +50,7 @@ export function Home() {
               </button>
               <Link className="btn btn-lg" to="/practice">Practice solo</Link>
             </div>
-            <p className="hero-note">No account needed. Your camera stays in your browser.</p>
+            <p className="hero-note">Sign in to save your sessions. Record only when you choose.</p>
             <details className="quick-setup">
               <summary>Using two webcams on one laptop?</summary>
               <button className="linklike" onClick={() => create('quick')} disabled={!!busy}>Open all three views at once</button>

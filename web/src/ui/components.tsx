@@ -25,6 +25,7 @@ export function TopBar({ children, title }: { children?: ReactNode; title?: stri
         </span>
       )}
       <span className="spacer" />
+      <Link className="btn" to="/account">My videos</Link>
       {children}
     </header>
   );

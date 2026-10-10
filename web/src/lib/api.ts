@@ -9,19 +9,25 @@ async function j<T>(res: Promise<Response>): Promise<T> {
 
 export const api = {
   config: () => j<ServerConfig>(fetch('/api/config')),
-  createSession: (mode: SessionMode, title?: string) =>
-    j<SessionInfo>(
+  createSession: async (mode: SessionMode, title?: string) => {
+    const auth = await j<{user: unknown; configured: boolean}>(fetch('/api/auth/me'));
+    if (auth.configured && !auth.user) {
+      window.location.assign('/account?next=' + encodeURIComponent(mode === 'practice' ? '/practice' : '/dashboard'));
+      throw new Error('Sign in to continue');
+    }
+    return j<SessionInfo>(
       fetch('/api/sessions', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ presenterId: presenterId(), mode, title }),
       }),
-    ),
+    );
+  },
   liveSession: (code: string) => j<SessionInfo>(fetch(`/api/sessions/live/${encodeURIComponent(code)}`)),
   history: () => j<HistoryRow[]>(fetch(`/api/presenters/${presenterId()}/sessions`)),
   get: <T,>(path: string) => j<T>(fetch(path)),
-  post: <T,>(path: string, body: unknown) =>
-    j<T>(fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })),
+  post: <T,>(path: string, body: unknown, headers: Record<string, string> = {}) =>
+    j<T>(fetch(path, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) })),
 };
 
 export interface HistoryRow {
