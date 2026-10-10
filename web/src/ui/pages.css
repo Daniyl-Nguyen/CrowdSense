@@ -542,3 +542,126 @@
   text-align: center;
   min-height: 3em;
 }
+
+/* ---- Report ---- */
+.report-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+  background: radial-gradient(120% 140% at 100% 0%, var(--spot-glow), transparent 60%), var(--ink-1);
+}
+.report-headline {
+  font-size: var(--fs-lg);
+  margin-top: var(--sp-3);
+  max-width: 60ch;
+  line-height: 1.35;
+}
+.score-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.ring-arc {
+  transition: stroke-dasharray 1.2s var(--ease);
+}
+.coach-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--sp-6);
+}
+.tips {
+  margin: 0;
+  padding-left: 1.4em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.tips li::marker {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--spot);
+}
+.tips p {
+  margin: 4px 0 8px;
+}
+.drill {
+  margin-top: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--spot);
+  background: var(--spot-glow);
+}
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
+.spike-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.spike-card {
+  border-left: 4px solid var(--alert);
+  background: var(--ink-2);
+  border-radius: var(--r-sm);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.spike-card blockquote {
+  margin: 0;
+  font-style: italic;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+.parts {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.parts li {
+  display: grid;
+  grid-template-columns: 110px 1fr 56px;
+  gap: var(--sp-3);
+  align-items: center;
+  font-size: var(--fs-sm);
+}
+.building {
+  display: flex;
+  gap: var(--sp-4);
+  align-items: center;
+}
+.spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 4px solid var(--ink-3);
+  border-top-color: var(--spot);
+  animation: spin 900ms linear infinite;
+  flex: none;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 760px) {
+  .coach-grid {
+    grid-template-columns: 1fr;
+  }
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+}

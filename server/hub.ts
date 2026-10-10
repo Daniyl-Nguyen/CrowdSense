@@ -49,6 +49,10 @@ export class Hub {
     return room;
   }
 
+  get rooms(): Room[] {
+    return [...this.byId.values()];
+  }
+
   find(codeOrId: string): Room | undefined {
     return this.byCode.get(codeOrId.toUpperCase()) ?? this.byId.get(codeOrId);
   }

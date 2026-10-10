@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import { config, lanUrls } from './config.ts';
 import { Hub } from './hub.ts';
 import { LocalRepo, type Repo } from './db/repo.ts';
+import { LocalBlobs, S3Blobs, type BlobStore } from './storage.ts';
 import { attachWs } from './ws.ts';
 import { sessionRoutes } from './routes/sessions.ts';
 import { resolveFfmpeg, setStatus } from './status.ts';
@@ -15,7 +16,7 @@ async function makeRepo(): Promise<Repo> {
   if (config.neonUrl) {
     try {
       const { NeonRepo } = await import('./db/neon.ts');
-      const repo = new NeonRepo(config.neonUrl) as unknown as Repo;
+      const repo: Repo = new NeonRepo(config.neonUrl);
       await repo.init();
       setStatus({ storage: 'neon' });
       console.log('[db] Neon Postgres connected');
@@ -27,6 +28,21 @@ async function makeRepo(): Promise<Repo> {
   const repo = new LocalRepo(config.dataDir);
   await repo.init();
   return repo;
+}
+
+async function makeBlobs(): Promise<BlobStore> {
+  if (config.s3Bucket && config.aws.hasCreds) {
+    try {
+      const s3 = new S3Blobs(config.s3Bucket);
+      await s3.init();
+      setStatus({ blobs: 's3' });
+      console.log(`[s3] using bucket ${config.s3Bucket}`);
+      return s3;
+    } catch (e) {
+      console.warn(`[s3] unavailable (${(e as Error).message}); recordings go to local disk`);
+    }
+  }
+  return new LocalBlobs(config.dataDir);
 }
 
 const app = express();
@@ -52,9 +68,11 @@ app.get('/models/:name', (req, res) => {
 });
 
 const repo = await makeRepo();
+const blobs = await makeBlobs();
+if (blobs instanceof LocalBlobs) blobs.mount(app);
 const hub = new Hub(repo);
 const { mountExtras } = await import('./extras.ts');
-await mountExtras(app, hub);
+await mountExtras(app, hub, blobs);
 app.use('/api', sessionRoutes(hub));
 
 // Production: serve the built web app.
