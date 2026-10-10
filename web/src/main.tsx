@@ -4,6 +4,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './App.tsx';
 import './ui/app.css';
 import './ui/pages.css';
+import './ui/studio.css';
+
+document.documentElement.dataset.theme = 'light';
 
 try {
   const theme = localStorage.getItem('rtr.theme');

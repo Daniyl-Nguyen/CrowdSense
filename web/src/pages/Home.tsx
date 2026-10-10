@@ -32,116 +32,96 @@ export function Home() {
   }
 
   return (
-    <div className="shell">
+    <div className="shell home-shell">
       <TopBar>
+        <span className="studio-tagline">Your presentation studio</span>
         <ThemeToggle />
       </TopBar>
-      <main id="main">
+      <main id="main" className="home-main">
         <section className="hero">
+          <SessionPreview />
           <div className="hero-copy">
-            <p className="eyebrow">Live presentation coaching</p>
-            <h1 className="hero-title">
-              Read the <span className="spot">room</span>
-              <br />
-              while you speak.
-            </h1>
-            <p className="hero-sub">
-              One camera on you and one on your audience, both analyzed privately in the browser. You get one quiet
-              nudge at a time, then a report and a synced replay afterward.
-            </p>
-            <div className="row" style={{ marginTop: 'var(--sp-5)' }}>
+            <p className="eyebrow">A calmer way to present</p>
+            <h1 className="hero-title">Find your voice.<br />Feel the room.</h1>
+            <p className="hero-sub">Stay connected to your audience with gentle, real-time coaching. Practice your delivery, find your rhythm, and make every word count.</p>
+            <div className="row hero-actions">
               <button className="btn btn-primary btn-lg" onClick={() => create('live')} disabled={!!busy}>
                 {busy === 'live' ? 'Creating…' : 'Start a live session'}
               </button>
-              <Link className="btn btn-lg" to="/practice">
-                Practice solo
-              </Link>
+              <Link className="btn btn-lg" to="/practice">Practice solo</Link>
             </div>
-            <p className="faint" style={{ marginTop: 'var(--sp-3)', fontSize: 'var(--fs-sm)' }}>
-              One laptop, two webcams?{' '}
-              <button className="linklike" onClick={() => create('quick')} disabled={!!busy}>
-                Open all three views at once
-              </button>
-            </p>
-            {error && <p style={{ color: 'var(--alert)' }}>{error}</p>}
+            <p className="hero-note">No account needed. Your camera stays in your browser.</p>
+            <details className="quick-setup">
+              <summary>Using two webcams on one laptop?</summary>
+              <button className="linklike" onClick={() => create('quick')} disabled={!!busy}>Open all three views at once</button>
+            </details>
+            {error && <p role="alert" style={{ color: 'var(--alert)' }}>{error}</p>}
           </div>
-          <HeroArt />
         </section>
-
-        <section className="home-grid">
-          <form
-            className="panel stack"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (code.trim()) nav(`/join?s=${code.trim().toUpperCase()}`);
-            }}
-          >
-            <h2>In the audience?</h2>
-            <p className="dim">Enter the room code to send anonymous reactions. No sign-up.</p>
-            <div className="row">
-              <label className="sr-only" htmlFor="join-code">
-                Room code
-              </label>
-              <input
-                id="join-code"
-                type="text"
-                placeholder="ROOM"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                maxLength={8}
-                autoCapitalize="characters"
-                style={{ flex: 1, fontFamily: 'var(--font-mono)', letterSpacing: '0.2em', textTransform: 'uppercase' }}
-              />
-              <button className="btn btn-primary" type="submit">
-                Join
-              </button>
+        <form className="panel home-join" onSubmit={(e) => {
+          e.preventDefault();
+          if (code.trim()) nav(`/join?s=${code.trim().toUpperCase()}`);
+        }}>
+          <div className="stack">
+            <h2>Here for someone else’s talk?</h2>
+            <p className="dim">Join the audience with your room code. No sign-up.</p>
+          </div>
+          <div className="join-controls">
+            <label className="sr-only" htmlFor="join-code">Room code</label>
+            <input id="join-code" type="text" placeholder="ROOM CODE" value={code} onChange={(e) => setCode(e.target.value)} maxLength={8} autoCapitalize="characters" required />
+            <button className="btn btn-primary" type="submit">Join</button>
+          </div>
+        </form>
+        <section className="home-bottom">
+          <div className="stack home-history">
+            <h2>Your recent sessions</h2>
+            <div className="panel">
+              {history == null ? <p className="dim">Loading your sessions…</p> : history.length === 0 ? (
+                <div className="stack"><h3>Your progress starts here.</h3><p className="dim">Complete your first session to see your insights and replay.</p></div>
+              ) : (
+                <ul className="history">{history.slice(0, 8).map((h) => (
+                  <li key={h.id}><Link to={h.hasReport ? `/report/${h.id}` : '#'} aria-disabled={!h.hasReport}>
+                    <span><strong>{h.title}</strong><span className="history-date faint">{new Date(h.createdAt).toLocaleString()}</span></span>
+                    <span className="history-score num">{h.score != null ? h.score : h.status}</span>
+                  </Link></li>
+                ))}</ul>
+              )}
             </div>
-          </form>
-
-          <div className="panel stack">
-            <h2>Your past sessions</h2>
-            {history == null ? (
-              <p className="empty">Loading…</p>
-            ) : history.length === 0 ? (
-              <p className="empty">No sessions yet. Your history is tied to this browser only, with no account.</p>
-            ) : (
-              <ul className="history">
-                {history.slice(0, 8).map((h) => (
-                  <li key={h.id}>
-                    <Link to={h.hasReport ? `/report/${h.id}` : '#'} aria-disabled={!h.hasReport}>
-                      <span>
-                        <strong>{h.title}</strong>
-                        <span className="faint"> · {new Date(h.createdAt).toLocaleString()}</span>
-                      </span>
-                      <span className="history-score num">{h.score != null ? h.score : h.status}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
-
-          <div className="panel stack">
-            <h2>Privacy by design</h2>
-            <ul className="checklist">
-              <li>Vision runs on-device. Video never streams to other devices.</li>
-              <li>No face recognition. Anonymous dots with per-session IDs.</li>
-              <li>Recording is opt-in and always shows a REC indicator.</li>
-              <li>Results are engagement estimates, not emotion reading.</li>
-            </ul>
-          </div>
+          <aside className="stack home-privacy">
+            <h2>Your space to improve.</h2>
+            <p className="dim">Video analysis stays on your device. No face recognition. Recording is always your choice.</p>
+            <p className="eyebrow">Private by design</p>
+          </aside>
         </section>
       </main>
     </div>
   );
 }
 
+function SessionPreview() {
+  return (
+    <aside className="panel session-preview" aria-label="Illustrative session preview">
+      <div className="preview-header"><h2>Your room, at a glance</h2><span className="preview-live">● LIVE</span></div>
+      <div className="preview-score"><span className="display num">84%</span><p>of the room<br />is with you</p></div>
+      <div className="preview-room" aria-label="Example audience engagement map">
+        <span>Front of room</span>
+        {[1, 2, 3].map((row) => <img key={row} src={`/design/audience-row-${row}.svg`} width="192" height="12" alt="" />)}
+        <p>● Attentive &nbsp; ○ Looking away</p>
+      </div>
+      <div className="preview-coaching"><span>One small adjustment</span><p>Pause. Let your last point land.</p></div>
+      <p className="preview-caption">Illustrative preview · engagement estimates</p>
+    </aside>
+  );
+}
+
 export function ThemeToggle() {
-  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme ?? 'dark');
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme ?? 'light');
   return (
     <button
-      className="btn btn-sm"
-      aria-pressed={theme === 'light'}
+      className="btn btn-sm theme-toggle"
+      aria-pressed={theme === 'dark'}
+      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
       onClick={() => {
         const next = theme === 'light' ? 'dark' : 'light';
         document.documentElement.dataset.theme = next;
@@ -153,44 +133,7 @@ export function ThemeToggle() {
         setTheme(next);
       }}
     >
-      {theme === 'light' ? 'Dark stage' : 'Projector (light)'}
+      {theme === 'light' ? 'Light mode' : 'Dark mode'}
     </button>
-  );
-}
-
-function HeroArt() {
-  // A stylized room map: anonymous dots in rows under a spotlight.
-  const dots: { x: number; y: number; s: 'attentive' | 'down' | 'away' }[] = [];
-  const pattern = 'aaadaaaawaaadaaaaaa';
-  let k = 0;
-  for (let row = 0; row < 4; row++)
-    for (let col = 0; col < 5 - (row === 0 ? 1 : 0); col++) {
-      const c = pattern[k++ % pattern.length];
-      dots.push({ x: 60 + col * 70 + (row === 0 ? 35 : 0) + (row % 2) * 8, y: 120 + row * 58, s: c === 'd' ? 'down' : c === 'w' ? 'away' : 'attentive' });
-    }
-  return (
-    <svg className="hero-art" viewBox="0 0 420 380" role="img" aria-label="Illustration: a room map with anonymous dots for audience members">
-      <defs>
-        <radialGradient id="spot" cx="50%" cy="0%" r="90%">
-          <stop offset="0" stopColor="var(--spot)" stopOpacity=".35" />
-          <stop offset="1" stopColor="var(--spot)" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <path d="M210 0 L410 380 H10 Z" fill="url(#spot)" />
-      <rect x="20" y="90" width="380" height="260" rx="22" fill="none" stroke="var(--line-strong)" strokeDasharray="4 6" />
-      <line x1="146" y1="96" x2="146" y2="344" stroke="var(--line)" />
-      <line x1="273" y1="96" x2="273" y2="344" stroke="var(--line)" />
-      {dots.map((d, i) => (
-        <g key={i} className="hero-dot" style={{ animationDelay: `${i * 90}ms` }}>
-          {d.s === 'attentive' && <circle cx={d.x} cy={d.y} r="11" fill="var(--st-attentive)" />}
-          {d.s === 'down' && <path d={`M${d.x - 11} ${d.y - 8} h22 l-11 19 z`} fill="var(--st-down)" />}
-          {d.s === 'away' && <circle cx={d.x} cy={d.y} r="9" fill="none" stroke="var(--st-away)" strokeWidth="4" />}
-        </g>
-      ))}
-      <rect x="120" y="30" width="180" height="34" rx="17" fill="var(--ink-2)" stroke="var(--line-strong)" />
-      <text x="210" y="52" textAnchor="middle" fill="var(--text)" fontFamily="var(--font-display)" fontWeight="700" fontSize="15">
-        You · 84% with you
-      </text>
-    </svg>
   );
 }

@@ -5,13 +5,7 @@ import { NUDGE } from '@shared/thresholds.ts';
 
 export function BrandMark({ size = 28 }: { size?: number }) {
   return (
-    <svg className="brand-mark" width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M32 4 L54 58 H10 Z" fill="var(--spot)" opacity=".22" />
-      <circle cx="32" cy="12" r="5" fill="var(--spot)" />
-      <circle cx="19" cy="46" r="5.5" fill="var(--st-attentive)" />
-      <circle cx="32" cy="41" r="5.5" fill="var(--st-attentive)" />
-      <path d="M40 41 h10 l-5 8.5 z" fill="var(--st-down)" />
-    </svg>
+    <span className="brand-symbol" style={{ fontSize: size }} aria-hidden="true">◉</span>
   );
 }
 

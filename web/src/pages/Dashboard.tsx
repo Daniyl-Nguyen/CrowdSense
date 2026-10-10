@@ -68,8 +68,11 @@ function DashboardView({ code }: { code: string }) {
         </button>
         <ThemeToggle />
       </TopBar>
-      <main id="main" className="stack">
-        {s && <SessionControls session={s} socket={room.socket} />}
+      <main id="main" className="stack dashboard-main">
+        <div className="session-heading">
+          <div className="stack"><p className="eyebrow">Your live session</p><h1>Make yourself heard.</h1><p className="dim">Your room, your delivery, one clear view.</p></div>
+          {s && <SessionControls session={s} socket={room.socket} />}
+        </div>
         {s && (s.status === 'lobby' || showJoin) && <JoinPanel session={s} config={room.config} />}
         {s?.status === 'ended' && (
           <div className="panel row" style={{ justifyContent: 'space-between' }}>
@@ -99,7 +102,9 @@ function DashboardView({ code }: { code: string }) {
                   </span>
                 </span>
               </div>
-              <Timeline points={feed.points} spikes={feed.spikes} windowMs={s?.status === 'live' ? 5 * 60_000 : undefined} />
+              {feed.points.some((p) => p.attention != null || p.score != null) ? (
+                <Timeline points={feed.points} spikes={feed.spikes} windowMs={s?.status === 'live' ? 5 * 60_000 : undefined} />
+              ) : <div className="chart-empty"><p>The room’s rhythm will appear here.</p><span>Connect your audience camera to get started.</span></div>}
             </section>
 
             <section className="panel dash-room" aria-labelledby="room-h">
@@ -114,7 +119,7 @@ function DashboardView({ code }: { code: string }) {
 
             <section className="panel dash-zones" aria-labelledby="zones-h">
               <div className="panel-head">
-                <h2 id="zones-h">Zones</h2>
+                <h2 id="zones-h">Across the room</h2>
                 <span className="faint" style={{ fontSize: 'var(--fs-xs)' }}>
                   engagement estimates
                 </span>
@@ -126,17 +131,17 @@ function DashboardView({ code }: { code: string }) {
           <div className="dash-side">
             <section className="panel dash-nudge" aria-labelledby="nudge-h">
               <div className="panel-head">
-                <h2 id="nudge-h">Presenter's monitor</h2>
+                <h2 id="nudge-h">Your quiet coach</h2>
                 <Link className="btn btn-sm btn-ghost" to={`/monitor?s=${code}`} target="_blank">
                   Full screen
                 </Link>
               </div>
-              <NudgeCard nudge={feed.latestNudge} compact />
+              <NudgeCard nudge={feed.latestNudge} compact idle={<div className="coach-empty"><p>Take a breath.<br />You’re ready.</p><span>One helpful nudge at a time, when you need it.</span></div>} />
             </section>
 
             <section className="panel dash-stats" aria-labelledby="stats-h">
               <div className="panel-head">
-                <h2 id="stats-h">Presenter</h2>
+                <h2 id="stats-h">Your delivery</h2>
               </div>
               <PresenterStats sample={tick?.presenter ?? null} speech={tick?.speech ?? null} score={tick?.score ?? null} />
             </section>
@@ -144,7 +149,7 @@ function DashboardView({ code }: { code: string }) {
           </div>
           <section className="panel dash-react" aria-labelledby="react-h">
             <div className="panel-head">
-              <h2 id="react-h">Audience phones</h2>
+              <h2 id="react-h">Audience reactions</h2>
               <span className="faint" style={{ fontSize: 'var(--fs-xs)' }}>
                 {s?.nodes.phones ?? 0} connected · last 60s
               </span>
@@ -174,7 +179,7 @@ function DashboardView({ code }: { code: string }) {
 
           <section className="panel dash-spikes" aria-labelledby="spikes-h">
             <div className="panel-head">
-              <h2 id="spikes-h">Lost moments</h2>
+              <h2 id="spikes-h">Moments to revisit</h2>
             </div>
             {feed.spikes.length === 0 ? (
               <p className="empty">None yet. Sharp attention drops, confusion, or "Lost me" bursts show up here.</p>
@@ -230,6 +235,7 @@ function DashboardView({ code }: { code: string }) {
 
 function JoinPanel({ session, config }: { session: SessionInfo; config: ServerConfig | null }) {
   const base = shareBase(config);
+  const [showQr, setShowQr] = useState(false);
   const items = [
     { label: 'Presenter camera', path: `/camera?role=presenter&s=${session.code}`, count: session.nodes.presenter, hint: 'Faces you' },
     { label: 'Audience camera', path: `/camera?role=audience&s=${session.code}`, count: session.nodes.audience, hint: 'Faces the room' },
@@ -240,13 +246,13 @@ function JoinPanel({ session, config }: { session: SessionInfo; config: ServerCo
   return (
     <section className="panel" aria-labelledby="join-h">
       <div className="panel-head">
-        <h2 id="join-h">Connect devices</h2>
-        <IntegrationChips config={config} />
+        <div className="stack"><h2 id="join-h">Set up your room</h2><p className="dim setup-description">Open a camera on this device, or scan its code from another.</p></div>
+        <button className="btn btn-sm" aria-expanded={showQr} onClick={() => setShowQr((v) => !v)}>{showQr ? 'Hide QR codes' : 'Show QR codes'}</button>
       </div>
       <div className="join-grid">
         {items.map((it) => (
           <div key={it.label} className="join-card">
-            <Qr url={`${base}${it.path}`} label={it.label} />
+            {showQr && <Qr url={`${base}${it.path}`} label={it.label} />}
             <div className="stack" style={{ gap: 4, minWidth: 0 }}>
               <strong>{it.label}</strong>
               <span className="faint" style={{ fontSize: 'var(--fs-xs)' }}>
@@ -256,14 +262,15 @@ function JoinPanel({ session, config }: { session: SessionInfo; config: ServerCo
                 <span className="dot" aria-hidden="true" />
                 {it.count ? `${it.count} connected` : 'waiting'}
               </span>
-              <a className="join-link mono" href={it.path} target="_blank" rel="noreferrer">
-                Open on this device
+              <a className="join-link" href={it.path} target="_blank" rel="noreferrer">
+                Open on this device ↗
               </a>
             </div>
           </div>
         ))}
       </div>
-      {insecure && (
+      <details className="integration-details"><summary>Connected services</summary><IntegrationChips config={config} /></details>
+      {showQr && insecure && (
         <p className="faint" style={{ fontSize: 'var(--fs-xs)', marginTop: 12 }}>
           Phone cameras need HTTPS. Run <span className="kbd">npm run dev:lan</span> or set PUBLIC_URL to a tunnel. Reaction buttons work over plain HTTP.
         </p>
