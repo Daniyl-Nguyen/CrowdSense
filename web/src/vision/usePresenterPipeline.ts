@@ -63,6 +63,12 @@ export function usePresenterPipeline({ socket, active, cameraId, micId, webSpeec
 
     (async () => {
       try {
+        if (!window.isSecureContext) {
+          throw new Error('Camera access requires HTTPS or localhost. On the server computer, open the dashboard at localhost and choose “Open on this device”. On another device, use an HTTPS link.');
+        }
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error('Camera access is unavailable in this browser. Open this page in Chrome, Edge, or Safari.');
+        }
         localStream = await navigator.mediaDevices.getUserMedia({
           video: {
             deviceId: cameraId ? { exact: cameraId } : undefined,

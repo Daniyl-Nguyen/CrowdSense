@@ -231,10 +231,10 @@ function DashboardView({ code }: { code: string }) {
 function JoinPanel({ session, config }: { session: SessionInfo; config: ServerConfig | null }) {
   const base = shareBase(config);
   const items = [
-    { label: 'Presenter camera', url: `${base}/camera?role=presenter&s=${session.code}`, count: session.nodes.presenter, hint: 'Faces you' },
-    { label: 'Audience camera', url: `${base}/camera?role=audience&s=${session.code}`, count: session.nodes.audience, hint: 'Faces the room' },
-    { label: 'Audience phones', url: `${base}/join?s=${session.code}`, count: session.nodes.phones, hint: 'Anonymous reactions' },
-    { label: 'Confidence monitor', url: `${base}/monitor?s=${session.code}`, count: session.nodes.monitors, hint: 'Screen facing you' },
+    { label: 'Presenter camera', path: `/camera?role=presenter&s=${session.code}`, count: session.nodes.presenter, hint: 'Faces you' },
+    { label: 'Audience camera', path: `/camera?role=audience&s=${session.code}`, count: session.nodes.audience, hint: 'Faces the room' },
+    { label: 'Audience phones', path: `/join?s=${session.code}`, count: session.nodes.phones, hint: 'Anonymous reactions' },
+    { label: 'Confidence monitor', path: `/monitor?s=${session.code}`, count: session.nodes.monitors, hint: 'Screen facing you' },
   ];
   const insecure = base.startsWith('http://') && !/localhost|127\.0\.0\.1/.test(base);
   return (
@@ -246,7 +246,7 @@ function JoinPanel({ session, config }: { session: SessionInfo; config: ServerCo
       <div className="join-grid">
         {items.map((it) => (
           <div key={it.label} className="join-card">
-            <Qr url={it.url} label={it.label} />
+            <Qr url={`${base}${it.path}`} label={it.label} />
             <div className="stack" style={{ gap: 4, minWidth: 0 }}>
               <strong>{it.label}</strong>
               <span className="faint" style={{ fontSize: 'var(--fs-xs)' }}>
@@ -256,8 +256,8 @@ function JoinPanel({ session, config }: { session: SessionInfo; config: ServerCo
                 <span className="dot" aria-hidden="true" />
                 {it.count ? `${it.count} connected` : 'waiting'}
               </span>
-              <a className="join-link mono" href={it.url} target="_blank" rel="noreferrer">
-                {it.url.replace(/^https?:\/\//, '')}
+              <a className="join-link mono" href={it.path} target="_blank" rel="noreferrer">
+                Open on this device
               </a>
             </div>
           </div>
