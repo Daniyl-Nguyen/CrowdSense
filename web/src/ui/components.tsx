@@ -152,7 +152,7 @@ const CATEGORY_ICON: Record<NudgeCategory, ReactNode> = {
 };
 
 /** The single, glanceable nudge. Fades after NUDGE.displaySec. */
-export function NudgeCard({ nudge, compact = false }: { nudge: Nudge | null; compact?: boolean }) {
+export function NudgeCard({ nudge, compact = false, idle }: { nudge: Nudge | null; compact?: boolean; idle?: ReactNode }) {
   const [visible, setVisible] = useState<Nudge | null>(null);
   useEffect(() => {
     if (!nudge) return;
@@ -180,12 +180,14 @@ export function NudgeCard({ nudge, compact = false }: { nudge: Nudge | null; com
         </div>
       ) : (
         <div className="nudge-idle" style={compact ? { minHeight: 160 } : undefined}>
+          {idle ?? (
           <div>
             <p className="display" style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text)' }}>
               All clear
             </p>
             <p>Coaching appears here, one nudge at a time.</p>
           </div>
+          )}
         </div>
       )}
     </div>

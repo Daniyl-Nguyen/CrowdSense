@@ -49,7 +49,7 @@ p {
   margin: 0;
 }
 a {
-  color: var(--spot);
+  color: var(--spot-text);
   text-underline-offset: 3px;
 }
 :focus-visible {

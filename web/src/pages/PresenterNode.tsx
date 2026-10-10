@@ -175,7 +175,7 @@ function Calibration({ calib, onRecalibrate }: { calib: ReturnType<typeof usePre
       {calib.state === 'running' && (
         <div className="stack">
           <p>
-            <strong className="display" style={{ fontSize: '2.4rem', color: 'var(--spot)' }}>
+            <strong className="display" style={{ fontSize: '2.4rem', color: 'var(--spot-text)' }}>
               {calib.remaining}s
             </strong>{' '}
             Stand tall, look at your audience, and talk normally.

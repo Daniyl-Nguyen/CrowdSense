@@ -41,7 +41,7 @@
 .linklike {
   background: none;
   border: none;
-  color: var(--spot);
+  color: var(--spot-text);
   font: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -82,7 +82,7 @@
 .history-score {
   font-family: var(--font-display);
   font-weight: 700;
-  color: var(--spot);
+  color: var(--spot-text);
 }
 .checklist {
   padding: 0;
@@ -240,13 +240,13 @@
   padding: 4px 14px;
   border-radius: var(--r-pill);
   border: 1px solid var(--spot);
-  color: var(--spot);
+  color: var(--spot-text);
   font-size: 1.4rem;
   font-weight: 700;
   letter-spacing: 0.18em;
 }
 .room-code .eyebrow {
-  color: var(--spot);
+  color: var(--spot-text);
   letter-spacing: 0.12em;
 }
 .dash-grid {
@@ -582,7 +582,7 @@
 .tips li::marker {
   font-family: var(--font-display);
   font-weight: 800;
-  color: var(--spot);
+  color: var(--spot-text);
 }
 .tips p {
   margin: 4px 0 8px;
@@ -785,7 +785,7 @@
   cursor: pointer;
   min-height: 32px;
 }
-.seg button[aria-selected='true'] {
+.seg button[aria-pressed='true'] {
   background: var(--spot);
   color: var(--text-on-color);
 }
@@ -862,4 +862,23 @@
   background: var(--ink-2);
   color: var(--text);
   box-shadow: inset 3px 0 0 var(--spot);
+}
+.monitor-idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  text-align: center;
+}
+.monitor-idle-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(4rem, 2rem + 10vw, 12rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+.monitor-idle-label {
+  font-size: clamp(1.2rem, 0.8rem + 1.5vw, 2.2rem);
+  font-weight: 700;
+  color: var(--text);
 }

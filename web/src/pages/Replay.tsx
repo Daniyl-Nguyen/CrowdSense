@@ -187,11 +187,11 @@ export default function Replay() {
             <div className="replay-pane">
               <div className="row replay-pane-head">
                 <strong>Audience</strong>
-                <div className="seg" role="tablist" aria-label="Audience view">
-                  <button role="tab" aria-selected={audView === 'map'} onClick={() => setAudView('map')}>
+                <div className="seg" role="group" aria-label="Audience view">
+                  <button aria-pressed={audView === 'map'} onClick={() => setAudView('map')}>
                     Room map
                   </button>
-                  <button role="tab" aria-selected={audView === 'video'} onClick={() => setAudView('video')} disabled={!audienceRec}>
+                  <button aria-pressed={audView === 'video'} onClick={() => setAudView('video')} disabled={!audienceRec}>
                     Video
                   </button>
                 </div>

@@ -187,7 +187,7 @@ function HeroArt() {
           {d.s === 'away' && <circle cx={d.x} cy={d.y} r="9" fill="none" stroke="var(--st-away)" strokeWidth="4" />}
         </g>
       ))}
-      <rect x="150" y="30" width="120" height="34" rx="17" fill="var(--ink-2)" stroke="var(--line-strong)" />
+      <rect x="120" y="30" width="180" height="34" rx="17" fill="var(--ink-2)" stroke="var(--line-strong)" />
       <text x="210" y="52" textAnchor="middle" fill="var(--text)" fontFamily="var(--font-display)" fontWeight="700" fontSize="15">
         You · 84% with you
       </text>

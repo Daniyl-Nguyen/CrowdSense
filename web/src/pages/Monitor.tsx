@@ -35,7 +35,18 @@ export default function Monitor() {
   return (
     <div className="monitor">
       <main id="main" className="monitor-main">
-        <NudgeCard nudge={nudge} />
+        <NudgeCard
+          nudge={nudge}
+          idle={
+            <div className="monitor-idle">
+              <span className="monitor-idle-num num" style={{ color: att == null ? 'var(--text-dim)' : att < 0.5 ? 'var(--alert)' : att < 0.7 ? 'var(--warn)' : 'var(--good)' }}>
+                {att != null ? `${Math.round(att * 100)}%` : '—'}
+              </span>
+              <span className="monitor-idle-label">{att != null ? 'of the room is with you' : room.session?.status === 'live' ? 'Waiting for the audience camera' : 'Ready when you are'}</span>
+              <span className="faint">No nudges right now. Keep going.</span>
+            </div>
+          }
+        />
       </main>
       <footer className="monitor-strip" aria-label="Live status">
         <Cell label="Time" value={fmtTime(elapsed)} />

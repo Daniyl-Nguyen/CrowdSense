@@ -23,6 +23,8 @@
   --spot: #ffb547;
   --spot-strong: #ffc76f;
   --spot-glow: rgba(255, 181, 71, 0.18);
+  --spot-text: #ffb547; /* amber used as text (links, codes) */
+  --heat-max: 45%; /* zone heatmap fill cap keeps dark-on-color text ≥ 4.5:1 */
 
   /* Engagement states (Okabe-Ito): sky blue, orange, reddish purple, grey */
   --st-attentive: #56b4e9;
@@ -97,12 +99,14 @@
   --spot: #b86e00;
   --spot-strong: #9a5b00;
   --spot-glow: rgba(184, 110, 0, 0.14);
+  --spot-text: #8a5300; /* 5.3:1 on --ink-2 */
+  --heat-max: 75%;
   --st-attentive: #0072b2;
   --st-down: #b35c00;
   --st-away: #a3447c;
   --st-drowsy: #6b7077;
-  --good: #007a5a;
-  --alert: #c2410c;
+  --good: #006b4f;
+  --alert: #b23a0a;
   --chart-1: #0072b2;
   --chart-2: #b86e00;
   --chart-grid: #e6e0d6;

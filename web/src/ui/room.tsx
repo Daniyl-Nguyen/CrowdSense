@@ -57,7 +57,7 @@ export function RoomMap({ sample, showLegend = true }: { sample: AudienceSample 
           );
         })}
         <rect x={W / 2 - 90} y={H - STAGE + 6} width="180" height="30" rx="15" fill="var(--spot)" opacity=".16" />
-        <text x={W / 2} y={H - STAGE + 26} textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--spot)">
+        <text x={W / 2} y={H - STAGE + 26} textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--spot-text)">
           You (stage)
         </text>
         {!faces.length && (
@@ -93,7 +93,7 @@ export function ZoneHeatmap({ zones }: { zones: ZoneStat[] | null }) {
             className="heat-cell"
             data-low={low || undefined}
             style={{
-              background: a == null ? 'var(--ink-2)' : `color-mix(in oklab, var(--st-attentive) ${Math.round(15 + a * 60)}%, var(--ink-2))`,
+              background: a == null ? 'var(--ink-2)' : `color-mix(in oklab, var(--st-attentive) calc(10% + (var(--heat-max) - 10%) * ${a.toFixed(2)}), var(--ink-2))`,
             }}
           >
             <span role="cell" className="heat-label">
