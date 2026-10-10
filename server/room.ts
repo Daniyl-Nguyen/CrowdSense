@@ -201,7 +201,7 @@ export class Room {
     const speech = this.speech.stats(t);
     const score = deliveryScore(presenter, speech);
     if (this.virtual && this.live) this.audience = { s: this.virtual.step(t, presenter, speech, score), at: fresh };
-    const audience = this.audience && fresh - this.audience.at < 4000 ? this.audience.s : null;
+    const audience = this.audience && fresh - this.audience.at < 6000 ? this.audience.s : null;
     this.reactions = this.reactions.filter((r) => t - r.t < 120_000);
     const tick: LiveTick = {
       t,

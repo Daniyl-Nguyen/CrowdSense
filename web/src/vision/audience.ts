@@ -37,6 +37,7 @@ interface Track {
   firstSeen: number;
   lastLandmarked: number;
   lm: LmObs | null;
+  browBase: number | null; // this face's own resting brow position (slow average)
   obs: FrameObs[];
   closedSince: number | null;
   state: FaceState;
@@ -164,6 +165,7 @@ export class AudienceAnalyzer {
         firstSeen: now,
         lastLandmarked: 0,
         lm: null,
+        browBase: null,
         obs: [],
         closedSince: null,
         state: 'attentive',
@@ -194,6 +196,8 @@ export class AudienceAnalyzer {
       if (!lm) continue;
       const hp = headPose(lm, CROP, CROP);
       const b = blend(res.faceBlendshapes?.[0]?.categories);
+      const brow = ((b.browDownLeft ?? 0) + (b.browDownRight ?? 0)) / 2;
+      t.browBase = t.browBase == null ? brow : t.browBase + (brow - t.browBase) * 0.03;
       t.lm = {
         ts: now,
         yaw: hp.yaw,
@@ -278,7 +282,8 @@ export class AudienceAnalyzer {
         y: round(norm(tr.cy, minY, maxY)),
         size: round(tr.h / maxH),
         state,
-        confusion: !!lmFresh && tr.lm!.browDown > AUDIENCE.confusionBrowDown,
+        // Relative to the face's own resting brow, so naturally serious faces don't read as confused.
+        confusion: !!lmFresh && tr.browBase != null && now - tr.firstSeen > 5000 && tr.lm!.browDown - tr.browBase > AUDIENCE.confusionBrowRise && tr.lm!.browDown > 0.3,
         smile: !!lmFresh && tr.lm!.smile > AUDIENCE.smile,
       });
     }

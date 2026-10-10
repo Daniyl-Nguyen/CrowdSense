@@ -12,8 +12,8 @@ export const AUDIENCE = {
   eyesClosed: 0.55,
   /** eyes closed this long (seconds) = drowsy. */
   drowsySec: 1.5,
-  /** brow-down average above this = confusion-like expression. */
-  confusionBrowDown: 0.5,
+  /** brow-down rising this much above the face's own resting level = confusion-like expression. */
+  confusionBrowRise: 0.22,
   smile: 0.4,
   /** tracker: drop a track after this long unseen (ms). */
   trackTtlMs: 1500,

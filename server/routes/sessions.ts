@@ -24,6 +24,25 @@ export function sessionRoutes(hub: Hub) {
     res.json(room.info());
   });
 
+  /** Compact history so a dashboard that joins mid-session can backfill its timeline and feeds. */
+  r.get('/sessions/:id/history', async (req, res) => {
+    const id = hub.find(req.params.id)?.id ?? req.params.id;
+    const [samples, spikes, tips, transcript, reactions] = await Promise.all([
+      hub.repo.getSamples(id),
+      hub.repo.getSpikes(id),
+      hub.repo.getTips(id),
+      hub.repo.getTranscript(id),
+      hub.repo.getReactions(id),
+    ]);
+    res.json({
+      points: samples.map((s) => ({ t: s.t, attention: s.audience?.attention ?? null, score: s.score?.score ?? null })),
+      spikes,
+      nudges: tips.filter((t) => t.origin === 'live'),
+      transcript: transcript.slice(-50),
+      questions: reactions.filter((r) => r.kind === 'question').map((r) => ({ t: r.t, text: r.text ?? null })),
+    });
+  });
+
   /** Session history for the anonymous presenter ID stored in this browser. */
   r.get('/presenters/:pid/sessions', async (req, res) => {
     const rows = await hub.repo.listSessions(req.params.pid, 30);

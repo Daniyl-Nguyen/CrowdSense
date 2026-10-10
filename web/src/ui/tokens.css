@@ -36,6 +36,11 @@
   --cat-posture: #e7a1cc;
   --cat-praise: #3dd6a8;
 
+  /* Chart series (validated: OKLCH band, CVD ΔE ≥ 22 on --ink-1) */
+  --chart-1: #3a90c8; /* attention */
+  --chart-2: #c98418; /* delivery score */
+  --chart-grid: #262c3a;
+
   /* Signals */
   --good: #3dd6a8;
   --warn: #ffb547;
@@ -98,6 +103,9 @@
   --st-drowsy: #6b7077;
   --good: #007a5a;
   --alert: #c2410c;
+  --chart-1: #0072b2;
+  --chart-2: #b86e00;
+  --chart-grid: #e6e0d6;
   color-scheme: light;
 }
 
