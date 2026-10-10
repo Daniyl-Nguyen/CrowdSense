@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+.data
+.cache
+web/public/models
+web/public/demo/*.mp4
+*.log

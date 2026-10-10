@@ -1,0 +1,118 @@
+/* ==========================================================================
+   Read the Room: design tokens ("Stagelight")
+   A dark stage with a warm spotlight. States use the Okabe-Ito colorblind-safe
+   palette and are never conveyed by color alone (shapes + labels everywhere).
+   All text/background pairs below meet WCAG AA (most AAA).
+   ========================================================================== */
+:root {
+  /* Surfaces */
+  --ink-0: #0b0d12; /* page */
+  --ink-1: #12151d; /* panel */
+  --ink-2: #1a1f2a; /* raised */
+  --ink-3: #242a38; /* hover / track */
+  --line: #2c3343;
+  --line-strong: #414a5f;
+
+  /* Text: on --ink-0: text 16.9:1, dim 8.9:1, faint 5.4:1 */
+  --text: #f4f0e8;
+  --text-dim: #b9b4aa;
+  --text-faint: #8f8b84;
+  --text-on-color: #0b0d12;
+
+  /* Spotlight accent */
+  --spot: #ffb547;
+  --spot-strong: #ffc76f;
+  --spot-glow: rgba(255, 181, 71, 0.18);
+
+  /* Engagement states (Okabe-Ito): sky blue, orange, reddish purple, grey */
+  --st-attentive: #56b4e9;
+  --st-down: #e69f00;
+  --st-away: #cc79a7;
+  --st-drowsy: #9aa0a6;
+
+  /* Nudge categories (dark text on these, all ≥ 7:1) */
+  --cat-audience: #56b4e9;
+  --cat-delivery: #ffb547;
+  --cat-posture: #e7a1cc;
+  --cat-praise: #3dd6a8;
+
+  /* Signals */
+  --good: #3dd6a8;
+  --warn: #ffb547;
+  --alert: #ff7a45; /* vermillion, lifted for dark bg */
+  --rec: #ff5a5f;
+
+  /* Type */
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Atkinson Hyperlegible', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.9375rem;
+  --fs-md: 1.0625rem;
+  --fs-lg: 1.375rem;
+  --fs-xl: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
+  --fs-hero: clamp(2.6rem, 1.4rem + 5vw, 5rem);
+  --fs-nudge: clamp(2rem, 1rem + 5vw, 5.5rem);
+
+  /* Space, radius, elevation */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  --r-pill: 999px;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --focus: 0 0 0 3px var(--ink-0), 0 0 0 6px var(--spot);
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-1: 120ms;
+  --dur-2: 240ms;
+  --dur-3: 480ms;
+
+  color-scheme: dark;
+}
+
+/* Projector / bright-room theme */
+:root[data-theme='light'] {
+  --ink-0: #f7f4ee;
+  --ink-1: #ffffff;
+  --ink-2: #efebe3;
+  --ink-3: #e3ddd2;
+  --line: #d6cfc2;
+  --line-strong: #b5ad9e;
+  --text: #15171c;
+  --text-dim: #45484f;
+  --text-faint: #5f6168;
+  --spot: #b86e00;
+  --spot-strong: #9a5b00;
+  --spot-glow: rgba(184, 110, 0, 0.14);
+  --st-attentive: #0072b2;
+  --st-down: #b35c00;
+  --st-away: #a3447c;
+  --st-drowsy: #6b7077;
+  --good: #007a5a;
+  --alert: #c2410c;
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0ms;
+    --dur-2: 0ms;
+    --dur-3: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

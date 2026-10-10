@@ -1,0 +1,136 @@
+/* ---- Home ---- */
+.hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--sp-6);
+  align-items: center;
+  padding: var(--sp-5) 0 var(--sp-7);
+}
+.hero-title {
+  font-size: var(--fs-hero);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  margin-top: var(--sp-3);
+}
+.hero-title .spot {
+  color: var(--spot);
+  text-shadow: 0 0 40px var(--spot-glow);
+}
+.hero-sub {
+  font-size: var(--fs-lg);
+  color: var(--text-dim);
+  max-width: 34ch;
+  margin-top: var(--sp-4);
+  line-height: 1.4;
+}
+.hero-art {
+  width: 100%;
+  max-width: 460px;
+  justify-self: center;
+}
+.hero-dot {
+  animation: dot-in var(--dur-3) var(--ease) both;
+}
+@keyframes dot-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.linklike {
+  background: none;
+  border: none;
+  color: var(--spot);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0;
+}
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sp-4);
+}
+.history {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.history a {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  text-decoration: none;
+  min-height: 44px;
+  align-items: center;
+}
+.history a:hover {
+  background: var(--ink-2);
+}
+.history a[aria-disabled='true'] {
+  pointer-events: none;
+  opacity: 0.7;
+}
+.history-score {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--spot);
+}
+.checklist {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  color: var(--text-dim);
+}
+.checklist li::before {
+  content: '✓';
+  color: var(--good);
+  font-weight: 700;
+  margin-right: var(--sp-2);
+}
+
+/* ---- Presenter node ---- */
+.presenter-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+.video-msg {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: var(--sp-3);
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+}
+.video-msg-err {
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(40, 8, 8, 0.85);
+}
+
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .hero-art {
+    max-width: 340px;
+  }
+  .presenter-layout {
+    grid-template-columns: 1fr;
+  }
+}
