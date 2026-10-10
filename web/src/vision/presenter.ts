@@ -89,7 +89,7 @@ export class PresenterAnalyzer {
         // Shoulder line angle: image-left shoulder is the presenter's right (pl[12]).
         obs.shoulderAngle = (Math.atan2(dy, dx) * 180) / Math.PI;
         for (const i of [15, 16])
-          if ((pl[i]?.visibility ?? 0) > 0.6) obs.wrists.push({ x: (pl[i].x * W - midX) / sw, y: (pl[i].y * H - midY) / sw });
+          if ((pl[i]?.visibility ?? 0) > 0.75) obs.wrists.push({ x: (pl[i].x * W - midX) / sw, y: (pl[i].y * H - midY) / sw });
       }
     }
     if (fl) {
@@ -234,7 +234,8 @@ export class PresenterAnalyzer {
         ay = movingAvg(wy, wf, 400);
       const jitter = wx.reduce((a, v, i) => a + Math.hypot(v - ax[i], wy[i] - ay[i]), 0) / wx.length;
       const handsLow = median(wy) > 0.6; // around the waist, where fidgeting happens
-      fidget = clamp01(jitter / 0.05) * (handsLow ? 1 : 0.5);
+      // Landmark jitter alone is ~0.02 shoulder-widths; only count motion above that noise floor.
+      fidget = clamp01((jitter - 0.025) / 0.06) * (handsLow ? 1 : 0.5);
     }
     return { sway, pacing, fidget };
   }
