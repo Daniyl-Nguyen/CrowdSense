@@ -1,4 +1,4 @@
--- Read the Room: Neon Postgres schema. Applied idempotently at server start.
+-- CrowdSense: Neon Postgres schema. Applied idempotently at server start.
 -- Times are epoch milliseconds (bigint) or session-relative milliseconds (t_ms).
 
 create table if not exists presenters (

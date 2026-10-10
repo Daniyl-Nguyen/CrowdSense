@@ -1,4 +1,4 @@
-# Read the Room
+# CrowdSense
 
 **Live presentation coaching from two cameras.** One camera watches you and one watches your audience, and every frame is analyzed privately in the browser. While you speak you get one quiet, explainable nudge at a time ("The right side is drifting. Look over there.", "Speak up.", "You've been looking at your screen for 40s."). Afterward you get a report with AI coaching and a synced replay you can compare against your last session.
 
@@ -162,7 +162,7 @@ Also on-device: **MediaPipe** Pose Landmarker (presenter) and Face Landmarker (p
 
 | Time | Do | Say |
 |---|---|---|
-| 0:00 | Dashboard on screen, QR codes visible | "Presenters can't see their own delivery or the whole room. Read the Room watches both, privately." |
+| 0:00 | Dashboard on screen, QR codes visible | "Presenters can't see their own delivery or the whole room. CrowdSense watches both, privately." |
 | 0:08 | Point at the room map | "Every dot is an anonymous person: an engagement estimate from head pose, computed in the browser. No video leaves the device and there's no face recognition." |
 | 0:15 | Start the session and speak normally | "My camera calibrated to *my* posture and *my* volume, so everything is judged against my baseline." |
 | 0:22 | Look down at your laptop and keep talking | (The monitor shows "You've been looking at your screen…" or the room map drifts.) |
@@ -170,7 +170,7 @@ Also on-device: **MediaPipe** Pose Landmarker (presenter) and Face Landmarker (p
 | 0:38 | Say "um, like, you know" a few times | "Whisper keeps the ums, because we prompt it to. The filler count climbs and I get one nudge: *Pause instead of filling.*" |
 | 0:45 | End the session and open the report | "Claude on Bedrock turns the data into coaching tied to exact moments, compared with my last run." |
 | 0:52 | Click a lost moment to open the replay | "Both videos, the transcript and the room map are synced. Here's exactly where I lost them." |
-| 0:58 | | "Read the Room: practice with a virtual audience, present with a private coach." |
+| 0:58 | | "CrowdSense: practice with a virtual audience, present with a private coach." |
 
 No crowd? Run the audience node with **Simulated room**, or run `npm run simulate`. The simulator scripts a right-side drift, a screen-gaze stretch, "Lost me" taps and a question.
 

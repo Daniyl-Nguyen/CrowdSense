@@ -15,9 +15,9 @@ export function TopBar({ children, title }: { children?: ReactNode; title?: stri
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      <Link to="/" className="brand" aria-label="Read the Room home">
+      <Link to="/" className="brand" aria-label="CrowdSense home">
         <BrandMark />
-        <span>Read the Room</span>
+        <span>CrowdSense</span>
       </Link>
       {title && (
         <span className="dim" style={{ fontWeight: 700 }}>

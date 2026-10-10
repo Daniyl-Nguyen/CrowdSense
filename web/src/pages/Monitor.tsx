@@ -29,7 +29,7 @@ export default function Monitor() {
   const wpm = t?.speech.wpm;
 
   useEffect(() => {
-    document.title = 'Confidence Monitor · Read the Room';
+    document.title = 'Confidence Monitor · CrowdSense';
   }, []);
 
   return (
