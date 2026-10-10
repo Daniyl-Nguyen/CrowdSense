@@ -304,7 +304,7 @@ export default function Report() {
 
 function TimelineLink({ report }: { report: ReportT }) {
   const nav = useNavigate();
-  return <Timeline points={report.timeline} spikes={report.spikes} onSeek={(t) => nav(`/replay/${report.sessionId}?t=${Math.round(t)}`)} />;
+  return <Timeline points={report.timeline} spikes={report.spikes} spanMs={report.durationSec * 1000} onSeek={(t) => nav(`/replay/${report.sessionId}?t=${Math.round(t)}`)} />;
 }
 
 function ScoreRing({ value }: { value: number | null }) {

@@ -5,6 +5,7 @@ import type { BlobStore } from './storage.ts';
 import { buildReport } from './report.ts';
 import { coach } from './ai/coach.ts';
 import { setStatus } from './status.ts';
+import { recordingRoutes } from './routes/recordings.ts';
 
 const building = new Map<string, Promise<unknown>>();
 
@@ -28,6 +29,8 @@ export async function mountExtras(app: Express, hub: Hub, blobs: BlobStore) {
       room.broadcast({ type: 'report.ready', sessionId: room.id });
     }, 4000);
   };
+
+  app.use('/api', recordingRoutes(hub, blobs));
 
   app.get('/api/sessions/:id/report', async (req, res) => {
     const s = await hub.repo.getSession(req.params.id);

@@ -23,6 +23,7 @@ export function Timeline({
   playhead,
   onSeek,
   height = H,
+  spanMs,
 }: {
   points: TimelinePoint[];
   spikes?: Spike[];
@@ -30,13 +31,14 @@ export function Timeline({
   playhead?: number;
   onSeek?: (t: number) => void;
   height?: number;
+  spanMs?: number; // full length for a finished session
 }) {
   const [hover, setHover] = useState<number | null>(null);
   const [table, setTable] = useState(false);
   const ref = useRef<SVGSVGElement>(null);
   const W = 800;
   // Live view grows from a 2-minute frame up to `windowMs`, then scrolls.
-  const end = Math.max(points.at(-1)?.t ?? 0, windowMs ? Math.min(windowMs, 120_000) : 60_000);
+  const end = spanMs ?? Math.max(points.at(-1)?.t ?? 0, windowMs ? Math.min(windowMs, 120_000) : 60_000);
   const start = windowMs ? Math.max(0, end - windowMs) : 0;
   const vis = points.filter((p) => p.t >= start);
   const x = (t: number) => PADL + ((t - start) / Math.max(1, end - start)) * (W - PADL - PADR);

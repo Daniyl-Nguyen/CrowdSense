@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "simulate": "tsx scripts/simulate.ts",
     "postinstall": "node scripts/fetch-models.mjs || true",
-    "dev:lan": "HTTPS=1 npm run dev"
+    "dev:lan": "HTTPS=1 npm run dev",
+    "s3:setup": "tsx scripts/s3-setup.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
