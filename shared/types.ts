@@ -198,6 +198,7 @@ export interface ServerConfig {
   coach: 'bedrock' | 'anthropic' | 'template';
   lanUrls: string[];
   ffmpeg: boolean;
+  extras: { gemini: boolean; tts: boolean; rekognition: boolean };
 }
 
 // ---- WebSocket protocol ----------------------------------------------------

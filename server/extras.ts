@@ -7,6 +7,9 @@ import { coach, registerCoach } from './ai/coach.ts';
 import { anthropicCoach, bedrockCoach } from './ai/claude.ts';
 import { setStatus } from './status.ts';
 import { recordingRoutes } from './routes/recordings.ts';
+import { debriefScript, synthesize, ttsAvailable } from './ai/tts.ts';
+import type { Report } from '../shared/report.ts';
+import { geminiAvailable, geminiReview, rekognitionAvailable, rekognitionCheck } from './ai/review.ts';
 
 const building = new Map<string, Promise<unknown>>();
 
@@ -25,16 +28,66 @@ export async function mountExtras(app: Express, hub: Hub, blobs: BlobStore) {
   // Provider order: Claude on Bedrock → Anthropic API → templates (built into coach.generate).
   registerCoach(bedrockCoach);
   registerCoach(anthropicCoach);
-  setStatus({ coach: coach.activeName() });
+  setStatus({ coach: coach.activeName(), extras: { gemini: geminiAvailable(), tts: ttsAvailable(), rekognition: rekognitionAvailable(blobs) } });
   hub.onEnded = (room) => {
     // Give Whisper a moment to finish the last utterance before summarizing.
     setTimeout(async () => {
       await generate(hub, blobs, room.id);
       room.broadcast({ type: 'report.ready', sessionId: room.id });
+      // Optional: Gemini reviews each lost moment once recordings have settled.
+      if (geminiAvailable())
+        setTimeout(async () => {
+          const s = await hub.repo.getSession(room.id);
+          if (s?.summary && (s.summary as Report).spikes.length) await geminiReview(hub.repo, blobs, s).catch((e) => console.warn('[gemini]', e.message));
+        }, 20_000);
     }, 4000);
   };
 
   app.use('/api', recordingRoutes(hub, blobs));
+
+  app.post('/api/sessions/:id/spike-review', async (req, res) => {
+    if (!geminiAvailable()) return res.status(404).json({ error: 'GEMINI_API_KEY not set' });
+    const s = await hub.repo.getSession(req.params.id);
+    if (!s?.summary) return res.status(404).json({ error: 'No report yet' });
+    try {
+      res.json({ reviews: await geminiReview(hub.repo, blobs, s) });
+    } catch (e) {
+      res.status(502).json({ error: (e as Error).message });
+    }
+  });
+
+  app.post('/api/sessions/:id/rekognition', async (req, res) => {
+    if (!rekognitionAvailable(blobs)) return res.status(404).json({ error: 'Needs S3 storage, AWS credentials and ffmpeg' });
+    const s = await hub.repo.getSession(req.params.id);
+    if (!s?.summary) return res.status(404).json({ error: 'No report yet' });
+    void rekognitionCheck(hub.repo, blobs, s);
+    res.status(202).json({ status: 'running' });
+  });
+
+  app.post('/api/tts', async (req, res) => {
+    const text = String(req.body?.text ?? '').trim();
+    if (!ttsAvailable() || !text) return res.sendStatus(404);
+    try {
+      res.type('audio/mpeg').send(await synthesize(text));
+    } catch (e) {
+      console.warn('[tts]', (e as Error).message);
+      res.sendStatus(502);
+    }
+  });
+
+  /** Spoken debrief: MP3 via ElevenLabs when configured, otherwise the script for browser speech. */
+  app.get('/api/sessions/:id/debrief', async (req, res) => {
+    const s = await hub.repo.getSession(req.params.id);
+    if (!s?.summary) return res.status(404).json({ error: 'No report yet' });
+    const text = debriefScript(s.summary as Report);
+    if (req.query.format === 'text' || !ttsAvailable()) return res.json({ text, audio: false });
+    try {
+      res.type('audio/mpeg').send(await synthesize(text));
+    } catch (e) {
+      console.warn('[tts] debrief', (e as Error).message);
+      res.json({ text, audio: false });
+    }
+  });
 
   app.get('/api/sessions/:id/report', async (req, res) => {
     const s = await hub.repo.getSession(req.params.id);

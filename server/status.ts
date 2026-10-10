@@ -3,7 +3,13 @@ import type { ServerConfig } from '../shared/types.ts';
 import { lanUrls } from './config.ts';
 import { transcriber } from './ai/whisper.ts';
 
-let state = { storage: 'local' as ServerConfig['storage'], blobs: 'local' as ServerConfig['blobs'], coach: 'template' as ServerConfig['coach'], ffmpeg: false };
+let state = {
+  storage: 'local' as ServerConfig['storage'],
+  blobs: 'local' as ServerConfig['blobs'],
+  coach: 'template' as ServerConfig['coach'],
+  ffmpeg: false,
+  extras: { gemini: false, tts: false, rekognition: false },
+};
 
 export function setStatus(patch: Partial<typeof state>) {
   state = { ...state, ...patch };

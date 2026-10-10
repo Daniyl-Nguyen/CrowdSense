@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Report as ReportT, PastSession } from '@shared/report.ts';
 import { SPEECH } from '@shared/thresholds.ts';
 import { SCORE_WEIGHTS } from '@shared/scoring.ts';
-import type { ScoreParts } from '@shared/types.ts';
+import type { ScoreParts, ServerConfig } from '@shared/types.ts';
 import { api } from '../lib/api.ts';
 import { Stat, TopBar, fmtTime, type Level } from '../ui/components.tsx';
 import { Timeline } from '../ui/Timeline.tsx';
@@ -19,6 +19,11 @@ export default function Report() {
   const [status, setStatus] = useState<'loading' | 'building' | 'error' | 'ready'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [regen, setRegen] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [cfg, setCfg] = useState<ServerConfig | null>(null);
+  useEffect(() => {
+    api.config().then(setCfg).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let stop = false;
@@ -91,6 +96,8 @@ export default function Report() {
   const prev = r.history[0];
   const delta = prev?.score != null && s.score != null ? s.score - prev.score : null;
   const fillerTop = Object.entries(s.fillerBreakdown).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const reviews = r.extras?.spikeReviews as Record<string, SpikeReview> | undefined;
+  const rek = r.extras?.rekognition as RekCheck | undefined;
 
   return (
     <div className="shell">
@@ -111,6 +118,7 @@ export default function Report() {
             </p>
             <h1 style={{ marginTop: 8 }}>{r.title}</h1>
             <p className="report-headline">{r.coaching.headline}</p>
+            <DebriefButton sessionId={r.sessionId} />
           </div>
           <div className="score-hero" aria-label={`Delivery score ${s.score ?? 'not available'} out of 100`}>
             <ScoreRing value={s.score} />
@@ -209,7 +217,25 @@ export default function Report() {
           <section className="panel" aria-labelledby="spikes-h">
             <div className="panel-head">
               <h2 id="spikes-h">Lost moments</h2>
-              <span className="faint">{r.spikes.length}</span>
+              {cfg?.extras.gemini && r.spikes.length > 0 && !reviews ? (
+                <button
+                  className="btn btn-sm"
+                  disabled={reviewing}
+                  onClick={async () => {
+                    setReviewing(true);
+                    try {
+                      const res = await api.post<{ reviews: Record<string, SpikeReview> }>(`/api/sessions/${r.sessionId}/spike-review`, {});
+                      setReport({ ...r, extras: { ...(r.extras ?? {}), spikeReviews: res.reviews } });
+                    } finally {
+                      setReviewing(false);
+                    }
+                  }}
+                >
+                  {reviewing ? 'Reviewing…' : 'Review with Gemini'}
+                </button>
+              ) : (
+                <span className="faint">{r.spikes.length}</span>
+              )}
             </div>
             {r.spikes.length === 0 ? (
               <p className="empty">No lost moments detected. Nice.</p>
@@ -232,6 +258,16 @@ export default function Report() {
                     )}
                     {sp.transcript && <blockquote>“{sp.transcript.slice(-240)}”</blockquote>}
                     {sp.presenter && <p className="dim" style={{ fontSize: 'var(--fs-sm)' }}>You were: {sp.presenter}</p>}
+                    {reviews?.[sp.id] && (
+                      <div className="ai-review">
+                        <span className="eyebrow">Gemini review{reviews[sp.id].usedKeyframe ? ' · used your video frame' : ''}</span>
+                        <p>{reviews[sp.id].likelyCause}</p>
+                        <p>
+                          <strong>Try: </strong>
+                          {reviews[sp.id].fix}
+                        </p>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -292,6 +328,7 @@ export default function Report() {
               </>
             )}
           </section>
+          {(cfg?.extras.rekognition || rek) && <RekognitionPanel sessionId={r.sessionId} initial={rek} onDone={(x) => setReport({ ...r, extras: { ...(r.extras ?? {}), rekognition: x } })} />}
         </div>
         <p className="faint" style={{ fontSize: 'var(--fs-xs)' }}>
           Attention and expression values are engagement estimates from head pose and facial movement. They are not emotion
@@ -469,5 +506,113 @@ function History({ current }: { current: ReportT }) {
         </table>
       </div>
     </div>
+  );
+}
+
+/** Spoken debrief (ElevenLabs if configured, else the browser's own voice). */
+function DebriefButton({ sessionId }: { sessionId: string }) {
+  const [state, setState] = useState<'idle' | 'loading' | 'playing'>('idle');
+  const audio = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => () => {
+    audio.current?.pause();
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+  }, []);
+  async function play() {
+    if (state === 'playing') {
+      audio.current?.pause();
+      speechSynthesis?.cancel();
+      setState('idle');
+      return;
+    }
+    setState('loading');
+    try {
+      const r = await fetch(`/api/sessions/${sessionId}/debrief`);
+      if (r.headers.get('content-type')?.startsWith('audio')) {
+        audio.current = new Audio(URL.createObjectURL(await r.blob()));
+        audio.current.onended = () => setState('idle');
+        await audio.current.play();
+      } else {
+        const { text } = await r.json();
+        const u = new SpeechSynthesisUtterance(text);
+        u.onend = () => setState('idle');
+        speechSynthesis.speak(u);
+      }
+      setState('playing');
+    } catch {
+      setState('idle');
+    }
+  }
+  return (
+    <button className="btn btn-sm" style={{ marginTop: 12 }} onClick={play} aria-pressed={state === 'playing'}>
+      {state === 'loading' ? 'Preparing debrief…' : state === 'playing' ? 'Stop debrief' : 'Listen to a 45-second debrief'}
+    </button>
+  );
+}
+
+interface SpikeReview {
+  summary: string;
+  likelyCause: string;
+  fix: string;
+  usedKeyframe: boolean;
+}
+interface RekCheck {
+  status: 'running' | 'done' | 'error';
+  error?: string;
+  seconds?: number;
+  meanAbsDiffPts?: number;
+  correlation?: number | null;
+}
+
+/** Amazon Rekognition Video cross-check of the in-browser attention estimates. */
+function RekognitionPanel({ sessionId, initial, onDone }: { sessionId: string; initial?: RekCheck; onDone: (r: RekCheck) => void }) {
+  const [rek, setRek] = useState<RekCheck | undefined>(initial);
+  useEffect(() => {
+    if (rek?.status !== 'running') return;
+    const id = window.setInterval(async () => {
+      const body = await fetch(`/api/sessions/${sessionId}/report`).then((x) => x.json()).catch(() => null);
+      const next = body?.report?.extras?.rekognition as RekCheck | undefined;
+      if (next && next.status !== 'running') {
+        setRek(next);
+        onDone(next);
+      }
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [rek?.status, sessionId, onDone]);
+  return (
+    <section className="panel" aria-labelledby="rek-h">
+      <div className="panel-head">
+        <h2 id="rek-h">Cross-check with Amazon Rekognition</h2>
+      </div>
+      <p className="dim" style={{ fontSize: 'var(--fs-sm)', marginBottom: 12 }}>
+        Re-estimates attention from the recorded audience video using Rekognition face detection (head pose and eyes only,
+        no identification) and compares it with what the browser measured live.
+      </p>
+      {rek?.status === 'done' ? (
+        <div className="stats" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+          <Stat label="Seconds compared" value={rek.seconds ?? 0} />
+          <Stat label="Mean difference" value={rek.meanAbsDiffPts ?? '—'} unit="pts" level={rek.meanAbsDiffPts == null ? undefined : lvl(rek.meanAbsDiffPts > 25, rek.meanAbsDiffPts > 12)} />
+          <Stat label="Correlation" value={rek.correlation ?? '—'} />
+        </div>
+      ) : rek?.status === 'running' ? (
+        <div className="building" role="status">
+          <span className="spinner" aria-hidden="true" />
+          <span>Rekognition is processing the video (usually 1–3 minutes)…</span>
+        </div>
+      ) : (
+        <>
+          {rek?.status === 'error' && <p style={{ color: 'var(--alert)', marginBottom: 8 }}>{rek.error}</p>}
+          <button
+            className="btn"
+            onClick={async () => {
+              const r = await fetch(`/api/sessions/${sessionId}/rekognition`, { method: 'POST' });
+              if (r.status === 202) setRek({ status: 'running' });
+              else setRek({ status: 'error', error: (await r.json()).error });
+            }}
+          >
+            Run cross-check
+          </button>
+        </>
+      )}
+    </section>
   );
 }

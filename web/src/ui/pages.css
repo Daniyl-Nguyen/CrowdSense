@@ -882,3 +882,15 @@
   font-weight: 700;
   color: var(--text);
 }
+
+.ai-review {
+  margin-top: 6px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--ink-1);
+  border: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
