@@ -5,6 +5,7 @@ import { App } from './App.tsx';
 import './ui/app.css';
 import './ui/pages.css';
 import './ui/studio.css';
+import './ui/home.css';
 
 document.documentElement.dataset.theme = 'light';
 

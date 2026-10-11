@@ -9,9 +9,9 @@ export function BrandMark({ size = 28 }: { size?: number }) {
   );
 }
 
-export function TopBar({ children, title }: { children?: ReactNode; title?: string }) {
+export function TopBar({ children, title, nav }: { children?: ReactNode; title?: string; nav?: ReactNode }) {
   return (
-    <header className="topbar">
+    <header className={nav ? 'topbar topbar-nav' : 'topbar'}>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
@@ -24,8 +24,8 @@ export function TopBar({ children, title }: { children?: ReactNode; title?: stri
           / {title}
         </span>
       )}
-      <span className="spacer" />
-      <AccountButton />
+      {nav ? <nav className="topnav" aria-label="Main">{nav}</nav> : <span className="spacer" />}
+      <AccountButton signInOnly={!!nav} />
       {children}
     </header>
   );
@@ -34,8 +34,8 @@ export function TopBar({ children, title }: { children?: ReactNode; title?: stri
 // Sign-in and sign-out both do full page loads, so one lookup per page load stays current.
 let authLookup: Promise<{ user: unknown; configured: boolean } | null> | null = null;
 
-/** "Sign in" while signed out of a server with accounts; "My videos" otherwise. */
-function AccountButton() {
+/** "Log in" while signed out of a server with accounts; "My videos" otherwise (unless the nav already links it). */
+function AccountButton({ signInOnly = false }: { signInOnly?: boolean }) {
   const [signedOut, setSignedOut] = useState(false);
   useEffect(() => {
     authLookup ??= fetch('/api/auth/me').then((r) => (r.ok ? r.json() : null)).catch(() => null);
@@ -43,7 +43,8 @@ function AccountButton() {
     authLookup.then((a) => live && setSignedOut(!!a?.configured && !a.user));
     return () => { live = false; };
   }, []);
-  if (signedOut) return <a className="btn btn-primary" href={'/api/auth/login?next=' + encodeURIComponent(location.pathname)}>Sign in</a>;
+  if (signedOut) return <a className="btn btn-primary" href={'/api/auth/login?next=' + encodeURIComponent(location.pathname)}>Log in</a>;
+  if (signInOnly) return null;
   return <Link className="btn" to="/account">My videos</Link>;
 }
 
