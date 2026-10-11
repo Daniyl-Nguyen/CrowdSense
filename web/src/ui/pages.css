@@ -572,6 +572,28 @@
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: var(--sp-6);
 }
+.coach-grid > *,
+.coach-grid .tips li,
+.coach-grid .checklist li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.coaching-evidence-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+.chip.coaching-evidence {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+  border-radius: var(--r-sm);
+}
 .tips {
   margin: 0;
   padding-left: 1.4em;

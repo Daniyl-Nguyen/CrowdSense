@@ -170,8 +170,8 @@ export default function Report() {
                   <li key={i}>
                     <strong>{t.title}</strong>
                     <p className="dim">{t.detail}</p>
-                    <div className="row" style={{ gap: 8 }}>
-                      {t.evidence && <span className="chip">{t.evidence}</span>}
+                    <div className="coaching-evidence-row">
+                      {t.evidence && <span className="chip coaching-evidence">{t.evidence}</span>}
                       {t.t != null && (
                         <Link className="btn btn-sm" to={`/replay/${r.sessionId}?t=${Math.max(0, t.t - 8000)}`}>
                           Watch {fmtTime(t.t)}
