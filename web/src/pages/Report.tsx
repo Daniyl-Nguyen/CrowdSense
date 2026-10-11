@@ -145,10 +145,17 @@ export default function Report() {
                   setRegenMessage('');
                   setRegenFailed(false);
                   try {
-                    const res = await api.post<{ report: ReportT }>(`/api/sessions/${r.sessionId}/report/regenerate`, {});
-                    if (!res.report) throw new Error('The server did not return an updated report.');
-                    setReport(res.report);
-                    setRegenMessage('Coaching updated at ' + new Date(res.report.generatedAt).toLocaleTimeString());
+                    await api.post(`/api/sessions/${r.sessionId}/report/regenerate`, {});
+                    setRegenMessage('Gemini is writing your coaching. This can take up to 90 seconds…');
+                    let updated: ReportT | undefined;
+                    for (let attempt = 0; attempt < 60; attempt++) {
+                      await new Promise(resolve => window.setTimeout(resolve, 2000));
+                      const result = await api.get<{ status: string; report?: ReportT }>(`/api/sessions/${r.sessionId}/report`);
+                      if (result.status === 'ready' && result.report) { updated = result.report; break; }
+                    }
+                    if (!updated) throw new Error('The report is still processing. Refresh this page shortly to see the result.');
+                    setReport(updated);
+                    setRegenMessage('Coaching updated at ' + new Date(updated.generatedAt).toLocaleTimeString());
                   } catch (e) {
                     setRegenFailed(true);
                     setRegenMessage((e as Error).message);
