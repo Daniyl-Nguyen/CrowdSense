@@ -32,7 +32,7 @@ export const config = {
   whisperModel: env('WHISPER_MODEL') ?? 'onnx-community/whisper-base.en',
 
   geminiKey: env('GEMINI_API_KEY'),
-  geminiCoachModel: env('GEMINI_COACH_MODEL') ?? 'gemini-2.5-flash',
+  geminiCoachModel: env('GEMINI_COACH_MODEL') ?? 'gemini-flash-latest',
   elevenKey: env('ELEVENLABS_API_KEY'),
   elevenVoice: env('ELEVENLABS_VOICE_ID') ?? 'JBFqnCBsd6RMkjVDRZzb',
 };

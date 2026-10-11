@@ -223,4 +223,4 @@ Hosted speech sends 16 kHz mono WAV chunks to HF Inference when `HF_ASR_ENABLED=
 
 ### Gemini report coaching
 
-Set `GEMINI_API_KEY` in the server environment. `GEMINI_COACH_MODEL` defaults to `gemini-2.5-flash`. Reports send session metrics and transcript excerpts to Gemini. Hugging Face is no longer used for report coaching. Initial reports can use rule-based coaching when Gemini is unavailable; Regenerate reports an error and preserves the previous report if Gemini fails. Restart the service after changing environment settings.
+Set `GEMINI_API_KEY` in the server environment. `GEMINI_COACH_MODEL` defaults to `gemini-flash-latest`. Reports send session metrics and transcript excerpts to Gemini. Hugging Face is no longer used for report coaching. Initial reports can use rule-based coaching when Gemini is unavailable; Regenerate reports an error and preserves the previous report if Gemini fails. Restart the service after changing environment settings.
