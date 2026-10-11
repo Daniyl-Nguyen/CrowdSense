@@ -14,6 +14,7 @@ import type { Repo, RecordingRow, SessionRow } from '../db/repo.ts';
 import { LocalBlobs, type BlobStore } from '../storage.ts';
 import { ffmpegPath } from '../status.ts';
 import { config } from '../config.ts';
+import { geminiConfigured, geminiGenerate } from './gemini-client.ts';
 
 const run = promisify(execFile);
 
@@ -32,7 +33,7 @@ export interface RekognitionCheck {
   points?: { t: number; browser: number | null; rekognition: number }[];
 }
 
-export const geminiAvailable = () => !!config.geminiKey;
+export const geminiAvailable = geminiConfigured;
 export const rekognitionAvailable = (blobs: BlobStore) => blobs.kind === 's3' && config.aws.hasCreds && !!ffmpegPath();
 
 async function localCopy(blobs: BlobStore, key: string, dir: string): Promise<string> {
@@ -68,7 +69,7 @@ export async function geminiReview(repo: Repo, blobs: BlobStore, session: Sessio
   const recs = await repo.getRecordings(session.id);
   const presenter = recs.find((r) => r.role === 'presenter' && r.status === 'ready');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rtr-gem-'));
-  const model = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
+  const model = process.env.GEMINI_MODEL?.trim() || config.geminiCoachModel;
   const out: Record<string, SpikeReview> = {};
   try {
     const video = presenter ? await localCopy(blobs, presenter.finalKey ?? presenter.key, tmp) : null;
@@ -83,13 +84,8 @@ Explain briefly what most likely lost the room and one concrete fix. Do not spec
 Respond as JSON: {"summary": string (1 sentence), "likelyCause": string (1-2 sentences), "fix": string (1-2 sentences)}.`;
       const parts: unknown[] = [{ text: prompt }];
       if (frame) parts.push({ inline_data: { mime_type: 'image/jpeg', data: fs.readFileSync(frame).toString('base64') } });
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': config.geminiKey! },
-        body: JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0.4 } }),
-        signal: AbortSignal.timeout(45_000),
-      });
-      if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      const res = await geminiGenerate(model, { contents: [{ role: 'user', parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0.4 } }, 45_000);
+      if (!res.ok) throw new Error(`Gemini review failed (HTTP ${res.status}). Check the configured model, billing, and permissions.`);
       const body = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
       const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
       const j = JSON.parse(text) as Omit<SpikeReview, 'usedKeyframe'>;

@@ -224,3 +224,13 @@ Hosted speech sends 16 kHz mono WAV chunks to HF Inference when `HF_ASR_ENABLED=
 ### Gemini report coaching
 
 Set `GEMINI_API_KEY` in the server environment. `GEMINI_COACH_MODEL` defaults to `gemini-flash-latest`. Reports send session metrics and transcript excerpts to Gemini. Hugging Face is no longer used for report coaching. Initial reports can use rule-based coaching when Gemini is unavailable; Regenerate reports an error and preserves the previous report if Gemini fails. Restart the service after changing environment settings.
+
+For Google Cloud billing through Vertex AI, set `GEMINI_BACKEND=vertex`,
+`GOOGLE_CLOUD_PROJECT` to your billing-linked project, `GOOGLE_CLOUD_LOCATION=global`,
+and `GEMINI_COACH_MODEL=gemini-3.8-flash`. The server uses Google's Application Default
+Credentials. On AWS, configure a workload identity credential or set
+`GOOGLE_APPLICATION_CREDENTIALS` to a private credential file outside the deployed
+source tree. Grant the application only the required Vertex AI access. Keep credential
+files out of Git and browser code; `.credentials/` is ignored for local setup.
+Both coaching and presenter-frame review use the selected backend. A Vertex
+authentication failure never falls back to AI Studio. Restart after changing settings.

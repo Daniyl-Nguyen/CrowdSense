@@ -45,7 +45,7 @@ export async function mountExtras(app: Express, hub: Hub, blobs: BlobStore) {
   app.use('/api', recordingRoutes(hub, blobs));
 
   app.post('/api/sessions/:id/spike-review', async (req, res) => {
-    if (!geminiAvailable()) return res.status(404).json({ error: 'GEMINI_API_KEY not set' });
+    if (!geminiAvailable()) return res.status(404).json({ error: 'Gemini server connection is not configured' });
     const s = await hub.repo.getSession(req.params.id);
     if (!s?.summary) return res.status(404).json({ error: 'No report yet' });
     try {
