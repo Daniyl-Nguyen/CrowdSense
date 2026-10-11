@@ -3,9 +3,8 @@ import type { Express } from 'express';
 import type { Hub } from './hub.ts';
 import type { BlobStore } from './storage.ts';
 import { buildReport } from './report.ts';
-import { huggingFaceCoach } from './ai/huggingface.ts';
+import { geminiCoach } from './ai/gemini.ts';
 import { coach, registerCoach } from './ai/coach.ts';
-import { anthropicCoach, bedrockCoach } from './ai/claude.ts';
 import { setStatus } from './status.ts';
 import { recordingRoutes } from './routes/recordings.ts';
 import { debriefScript, synthesize, ttsAvailable } from './ai/tts.ts';
@@ -14,11 +13,10 @@ import { geminiAvailable, geminiReview, rekognitionAvailable, rekognitionCheck }
 
 const building = new Map<string, Promise<unknown>>();
 
-export function generate(hub: Hub, blobs: BlobStore, sessionId: string) {
+export function generate(hub: Hub, blobs: BlobStore, sessionId: string, requireAI = false) {
   let p = building.get(sessionId);
   if (!p) {
-    p = buildReport(hub.repo, blobs, sessionId)
-      .catch((e) => console.warn('[report] failed', e))
+    p = buildReport(hub.repo, blobs, sessionId, requireAI)
       .finally(() => building.delete(sessionId));
     building.set(sessionId, p);
   }
@@ -26,15 +24,13 @@ export function generate(hub: Hub, blobs: BlobStore, sessionId: string) {
 }
 
 export async function mountExtras(app: Express, hub: Hub, blobs: BlobStore) {
-  // Provider order: Claude on Bedrock → Anthropic API → templates (built into coach.generate).
-  registerCoach(huggingFaceCoach);
-  registerCoach(bedrockCoach);
-  registerCoach(anthropicCoach);
+  // Gemini coaching; initial reports retain the template fallback.
+  registerCoach(geminiCoach);
   setStatus({ coach: coach.activeName(), extras: { gemini: geminiAvailable(), tts: ttsAvailable(), rekognition: rekognitionAvailable(blobs) } });
   hub.onEnded = (room) => {
     // Give Whisper a moment to finish the last utterance before summarizing.
     setTimeout(async () => {
-      await generate(hub, blobs, room.id);
+      try { await generate(hub, blobs, room.id); } catch { console.warn('[report] Automatic report generation failed'); return; }
       room.broadcast({ type: 'report.ready', sessionId: room.id });
       // Optional: Gemini reviews each lost moment once recordings have settled.
       if (geminiAvailable())
@@ -96,15 +92,21 @@ export async function mountExtras(app: Express, hub: Hub, blobs: BlobStore) {
     if (!s) return res.status(404).json({ error: 'Session not found' });
     if (s.summary) return res.json({ status: 'ready', report: s.summary });
     if (s.status !== 'ended') return res.status(409).json({ status: s.status, error: 'Session has not ended yet' });
-    void generate(hub, blobs, s.id);
+    void generate(hub, blobs, s.id).catch(() => console.warn('[report] Report generation failed'));
     res.status(202).json({ status: 'building' });
   });
 
   app.post('/api/sessions/:id/report/regenerate', async (req, res) => {
     const s = await hub.repo.getSession(req.params.id);
     if (!s || s.status !== 'ended') return res.status(404).json({ error: 'No ended session' });
-    await generate(hub, blobs, s.id);
-    const fresh = await hub.repo.getSession(s.id);
-    res.json({ status: 'ready', report: fresh?.summary });
+    if (building.has(s.id)) return res.status(409).json({ error: 'A report is already being generated. Please try again when it finishes.' });
+    try {
+      await generate(hub, blobs, s.id, true);
+      const fresh = await hub.repo.getSession(s.id);
+      res.json({ status: 'ready', report: fresh?.summary });
+    } catch (e) {
+      const message = (e as Error).message;
+      res.status(502).json({ error: /^(AI coaching|No AI coaching)/.test(message) ? message : 'Could not update the report. Please try again.' });
+    }
   });
 }

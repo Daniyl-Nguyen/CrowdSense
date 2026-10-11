@@ -132,15 +132,20 @@ export const coach = {
   activeName(): Coaching['provider'] {
     return providers.find((p) => p.available())?.name ?? 'template';
   },
-  async generate(report: Omit<Report, 'coaching'>, transcript: TranscriptSegment[]): Promise<Coaching> {
+  async generate(report: Omit<Report, 'coaching'>, transcript: TranscriptSegment[], requireAI = false): Promise<Coaching> {
+    let attempted = false;
+    let providerError = '';
     for (const p of providers) {
       if (!p.available()) continue;
+      attempted = true;
       try {
         return await p.generate(report, transcript);
       } catch (e) {
+        if ((e as Error).message.startsWith('AI coaching')) providerError = (e as Error).message;
         console.warn(`[coach] ${p.name} failed (${(e as Error).message}); trying next provider`);
       }
     }
+    if (requireAI) throw new Error(providerError || (attempted ? 'AI coaching is unavailable right now. Your previous report is unchanged; try again later.' : 'No AI coaching provider is configured. Your previous report is unchanged.'));
     return templateCoach.generate(report, transcript);
   },
 };

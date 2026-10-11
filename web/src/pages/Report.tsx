@@ -9,7 +9,7 @@ import { Stat, TopBar, fmtTime, type Level } from '../ui/components.tsx';
 import { Timeline } from '../ui/Timeline.tsx';
 import { REACTIONS } from '../ui/reactions.tsx';
 
-const PROVIDER_LABEL = { huggingface: 'Hugging Face AI coach', bedrock: 'Claude on Amazon Bedrock', anthropic: 'Claude (Anthropic API)', template: 'Rule-based coach (no AI key set)' };
+const PROVIDER_LABEL = { gemini: 'Gemini AI coach', huggingface: 'Hugging Face AI coach', bedrock: 'Claude on Amazon Bedrock', anthropic: 'Claude (Anthropic API)', template: 'Rule-based coaching' };
 const pct = (v: number | null | undefined) => (v == null ? '—' : Math.round(v * 100));
 const lvl = (bad: boolean, warn: boolean): Level => (bad ? 'alert' : warn ? 'warn' : 'good');
 
@@ -19,6 +19,8 @@ export default function Report() {
   const [status, setStatus] = useState<'loading' | 'building' | 'error' | 'ready'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [regen, setRegen] = useState(false);
+  const [regenMessage, setRegenMessage] = useState('');
+  const [regenFailed, setRegenFailed] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [cfg, setCfg] = useState<ServerConfig | null>(null);
   useEffect(() => {
@@ -140,9 +142,16 @@ export default function Report() {
                 disabled={regen}
                 onClick={async () => {
                   setRegen(true);
+                  setRegenMessage('');
+                  setRegenFailed(false);
                   try {
                     const res = await api.post<{ report: ReportT }>(`/api/sessions/${r.sessionId}/report/regenerate`, {});
+                    if (!res.report) throw new Error('The server did not return an updated report.');
                     setReport(res.report);
+                    setRegenMessage('Coaching updated at ' + new Date(res.report.generatedAt).toLocaleTimeString());
+                  } catch (e) {
+                    setRegenFailed(true);
+                    setRegenMessage((e as Error).message);
                   } finally {
                     setRegen(false);
                   }
@@ -152,6 +161,7 @@ export default function Report() {
               </button>
             </span>
           </div>
+          {regenMessage && <p role={regenFailed ? 'alert' : 'status'} style={{ marginBottom: 16, color: regenFailed ? 'var(--alert)' : 'var(--muted)' }}>{regenMessage}</p>}
           <div className="coach-grid">
             <div className="stack">
               <h3>Work on</h3>

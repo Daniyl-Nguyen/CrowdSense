@@ -207,18 +207,20 @@ No crowd? Run the audience node with **Simulated room**, or run `npm run simulat
 
 Headless Chromium with fake camera/mic devices (a public-domain portrait, a 29-person group photo, and a speech clip) exercised: presenter calibration, live metrics, Whisper transcription, audience detection (31 tracks), dashboard, monitor, phone rate limiting, spikes and nudges, Neon persistence (against real Postgres via PGlite), report with history comparison, Practice Mode runs, MediaRecorder upload, ffmpeg remux (`Duration: N/A` → `39.6 s`), and synced replay seeking. Bedrock, Anthropic, Gemini, ElevenLabs, S3 and Rekognition calls are written against their SDKs/APIs and fail over gracefully, but they need real keys to verify end to end.
 
-### Hugging Face hosted coaching and transcription
+### Hosted speech transcription (Hugging Face)
 
 Create a fine-grained token at https://huggingface.co/settings/tokens with **Make calls to Inference Providers** permission. Save it only in the server environment (local `.env` for development; `/etc/read-the-room.env` for the deployed app):
 
 ```dotenv
 HF_TOKEN=
-HF_COACH_ENABLED=1
-HF_COACH_MODEL=openai/gpt-oss-120b
 HF_ASR_ENABLED=1
 HF_ASR_MODEL=openai/whisper-large-v3
 ```
 
 Restart the server after configuring it. Never put the token in frontend/Vite variables or commit it. Inference provider access, available models, and usage credits depend on your Hugging Face account.
 
-Coaching sends session metrics and transcript excerpts to Hugging Face's chat router. Hosted speech sends 16 kHz mono WAV chunks to HF Inference. Each feature can be disabled independently with its `*_ENABLED=0` flag. Without a token, neither hosted feature runs. Failed coaching falls back through the existing coach providers to templates; failed hosted speech uses local Whisper and waits 60 seconds before retrying the hosted service. Keep `WHISPER_ENABLED=1` for the local speech fallback. Hosted recognition may normalize filler words, so filler counts remain estimates.
+Hosted speech sends 16 kHz mono WAV chunks to HF Inference when `HF_ASR_ENABLED=1` and `HF_TOKEN` is set. Failed requests fall back to local Whisper. Keep `WHISPER_ENABLED=1` for local fallback.
+
+### Gemini report coaching
+
+Set `GEMINI_API_KEY` in the server environment. `GEMINI_COACH_MODEL` defaults to `gemini-2.5-flash`. Reports send session metrics and transcript excerpts to Gemini. Hugging Face is no longer used for report coaching. Initial reports can use rule-based coaching when Gemini is unavailable; Regenerate reports an error and preserves the previous report if Gemini fails. Restart the service after changing environment settings.

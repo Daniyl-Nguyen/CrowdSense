@@ -196,7 +196,7 @@ export interface ServerConfig {
   hostedSpeech?: boolean;
   storage: 'neon' | 'local';
   blobs: 's3' | 'local';
-  coach: 'huggingface' | 'bedrock' | 'anthropic' | 'template';
+  coach: 'gemini' | 'huggingface' | 'bedrock' | 'anthropic' | 'template';
   lanUrls: string[];
   ffmpeg: boolean;
   extras: { gemini: boolean; tts: boolean; rekognition: boolean };

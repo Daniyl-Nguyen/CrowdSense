@@ -22,9 +22,7 @@ export const config = {
   bedrockEnabled: env('BEDROCK_ENABLED') !== '0',
 
   hfToken: env('HF_TOKEN'),
-  hfCoachEnabled: env('HF_COACH_ENABLED') === '1',
   hfAsrEnabled: env('HF_ASR_ENABLED') === '1',
-  hfCoachModel: env('HF_COACH_MODEL') ?? 'openai/gpt-oss-120b',
   hfAsrModel: env('HF_ASR_MODEL') ?? 'openai/whisper-large-v3',
 
   anthropicKey: env('ANTHROPIC_API_KEY'),
@@ -34,6 +32,7 @@ export const config = {
   whisperModel: env('WHISPER_MODEL') ?? 'onnx-community/whisper-base.en',
 
   geminiKey: env('GEMINI_API_KEY'),
+  geminiCoachModel: env('GEMINI_COACH_MODEL') ?? 'gemini-2.5-flash',
   elevenKey: env('ELEVENLABS_API_KEY'),
   elevenVoice: env('ELEVENLABS_VOICE_ID') ?? 'JBFqnCBsd6RMkjVDRZzb',
 };

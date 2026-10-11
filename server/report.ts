@@ -11,7 +11,7 @@ const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.le
 const frac = (xs: boolean[]) => (xs.length ? xs.filter(Boolean).length / xs.length : 0);
 const r2 = (v: number | null) => (v == null ? null : Math.round(v * 100) / 100);
 
-export async function buildReport(repo: Repo, blobs: BlobStore, sessionId: string): Promise<Report> {
+export async function buildReport(repo: Repo, blobs: BlobStore, sessionId: string, requireAI = false): Promise<Report> {
   const session = await repo.getSession(sessionId);
   if (!session) throw new Error('session not found');
   const [samples, transcript, spikes, reactions, tips] = await Promise.all([
@@ -131,7 +131,7 @@ export async function buildReport(repo: Repo, blobs: BlobStore, sessionId: strin
     spikes: reportSpikes,
     history,
   };
-  const coaching = await coach.generate(base, transcript);
+  const coaching = await coach.generate(base, transcript, requireAI);
   const report: Report = { ...base, coaching };
 
   // System of record: Neon (summary + tips); artifacts: S3 (report + transcript JSON).

@@ -50,7 +50,7 @@ export interface CoachingTip {
 }
 
 export interface Coaching {
-  provider: 'huggingface' | 'bedrock' | 'anthropic' | 'template';
+  provider: 'gemini' | 'huggingface' | 'bedrock' | 'anthropic' | 'template';
   model?: string;
   headline: string;
   strengths: string[];
