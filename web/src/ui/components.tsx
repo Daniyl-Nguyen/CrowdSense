@@ -25,10 +25,26 @@ export function TopBar({ children, title }: { children?: ReactNode; title?: stri
         </span>
       )}
       <span className="spacer" />
-      <Link className="btn" to="/account">My videos</Link>
+      <AccountButton />
       {children}
     </header>
   );
+}
+
+// Sign-in and sign-out both do full page loads, so one lookup per page load stays current.
+let authLookup: Promise<{ user: unknown; configured: boolean } | null> | null = null;
+
+/** "Sign in" while signed out of a server with accounts; "My videos" otherwise. */
+function AccountButton() {
+  const [signedOut, setSignedOut] = useState(false);
+  useEffect(() => {
+    authLookup ??= fetch('/api/auth/me').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    let live = true;
+    authLookup.then((a) => live && setSignedOut(!!a?.configured && !a.user));
+    return () => { live = false; };
+  }, []);
+  if (signedOut) return <a className="btn btn-primary" href={'/api/auth/login?next=' + encodeURIComponent(location.pathname)}>Sign in</a>;
+  return <Link className="btn" to="/account">My videos</Link>;
 }
 
 /** Shown before any camera turns on. Nothing starts until the user agrees. */
