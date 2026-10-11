@@ -11,6 +11,7 @@ import { debriefScript, synthesize, ttsAvailable } from './ai/tts.ts';
 import type { Report } from '../shared/report.ts';
 import { geminiAvailable, geminiReview, rekognitionAvailable, rekognitionCheck } from './ai/review.ts';
 
+const regenerationErrors = new Map<string, string>();
 const building = new Map<string, Promise<unknown>>();
 
 export function generate(hub: Hub, blobs: BlobStore, sessionId: string, requireAI = false) {
@@ -90,6 +91,9 @@ export async function mountExtras(app: Express, hub: Hub, blobs: BlobStore) {
   app.get('/api/sessions/:id/report', async (req, res) => {
     const s = await hub.repo.getSession(req.params.id);
     if (!s) return res.status(404).json({ error: 'Session not found' });
+    if (building.has(s.id)) return res.status(202).json({ status: 'building' });
+    const regenerationError = regenerationErrors.get(s.id);
+    if (regenerationError) return res.status(502).json({ error: regenerationError });
     if (s.summary) return res.json({ status: 'ready', report: s.summary });
     if (s.status !== 'ended') return res.status(409).json({ status: s.status, error: 'Session has not ended yet' });
     void generate(hub, blobs, s.id).catch(() => console.warn('[report] Report generation failed'));
@@ -100,13 +104,13 @@ export async function mountExtras(app: Express, hub: Hub, blobs: BlobStore) {
     const s = await hub.repo.getSession(req.params.id);
     if (!s || s.status !== 'ended') return res.status(404).json({ error: 'No ended session' });
     if (building.has(s.id)) return res.status(409).json({ error: 'A report is already being generated. Please try again when it finishes.' });
-    try {
-      await generate(hub, blobs, s.id, true);
-      const fresh = await hub.repo.getSession(s.id);
-      res.json({ status: 'ready', report: fresh?.summary });
-    } catch (e) {
+    regenerationErrors.delete(s.id);
+    void generate(hub, blobs, s.id, true).catch((e) => {
       const message = (e as Error).message;
-      res.status(502).json({ error: /^(AI coaching|No AI coaching)/.test(message) ? message : 'Could not update the report. Please try again.' });
-    }
+      const safe = /^(AI coaching|No AI coaching)/.test(message) ? message : 'Could not update the report. Please try again.';
+      regenerationErrors.set(s.id, safe);
+      setTimeout(() => { if (regenerationErrors.get(s.id) === safe) regenerationErrors.delete(s.id); }, 10 * 60000).unref();
+    });
+    res.status(202).json({ status: 'building' });
   });
 }

@@ -141,6 +141,7 @@ export const coach = {
       try {
         return await p.generate(report, transcript);
       } catch (e) {
+        if ((e as Error).name === 'TimeoutError') providerError = 'AI coaching timed out after 90 seconds. Please retry; your previous report is unchanged.';
         if ((e as Error).message.startsWith('AI coaching')) providerError = (e as Error).message;
         console.warn(`[coach] ${p.name} failed (${(e as Error).message}); trying next provider`);
       }
