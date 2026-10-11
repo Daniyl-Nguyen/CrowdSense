@@ -135,7 +135,7 @@ export default function Report() {
         <section className="panel" aria-labelledby="coach-h">
           <div className="panel-head">
             <h2 id="coach-h">Coaching</h2>
-            <span className="row" style={{ gap: 8 }}>
+            <span className="row coach-actions">
               <span className="chip">{PROVIDER_LABEL[r.coaching.provider]}</span>
               <button
                 className="btn btn-sm"

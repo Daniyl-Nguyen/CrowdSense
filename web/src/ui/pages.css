@@ -588,6 +588,24 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.coach-actions {
+  gap: 8px;
+  min-width: 0;
+}
+.coach-grid .tips strong {
+  display: block;
+  line-height: 1.35;
+}
+/* Hanging indent so wrapped strengths stay clear of the checkmark. */
+.coach-grid .checklist li {
+  position: relative;
+  padding-left: 1.5em;
+}
+.coach-grid .checklist li::before {
+  position: absolute;
+  left: 0;
+  margin-right: 0;
+}
 .coaching-evidence-row {
   display: flex;
   flex-direction: column;

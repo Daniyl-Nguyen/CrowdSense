@@ -148,6 +148,7 @@ a {
 }
 .panel-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-3);
