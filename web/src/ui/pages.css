@@ -578,6 +578,16 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+/* AI copy can contain long sentences, URLs, or line breaks. Keep the full
+   response readable without relying on model-specific output instructions. */
+.coach-grid .tips strong,
+.coach-grid .tips p,
+.coach-grid .checklist li,
+.coach-grid .drill p,
+.report-headline {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .coaching-evidence-row {
   display: flex;
   flex-direction: column;
@@ -589,8 +599,9 @@
   display: block;
   max-width: 100%;
   min-width: 0;
-  white-space: normal;
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
+  box-sizing: border-box;
   line-height: 1.5;
   border-radius: var(--r-sm);
 }
